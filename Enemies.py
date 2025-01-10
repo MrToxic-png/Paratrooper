@@ -1,12 +1,17 @@
 from random import randrange
-import pygame
 
 import LoadImages
+import pygame
 
-class HelicopterLeft(pygame.sprite.Sprite):
-    first_image = LoadImages.load_image("helicopter_left_1.png")
-    second_image = LoadImages.load_image("helicopter_left_2.png")
-    third_image = LoadImages.load_image("helicopter_left_3.png")
+
+class Helicopter(pygame.sprite.Sprite):
+    pass
+
+
+class HelicopterLeft(Helicopter):
+    first_image = LoadImages.load_image('images/helicopter_left_1.png')
+    second_image = LoadImages.load_image('images/helicopter_left_2.png')
+    third_image = LoadImages.load_image('images/helicopter_left_3.png')
 
     def __init__(self, group):
         super().__init__(group)
@@ -18,6 +23,7 @@ class HelicopterLeft(pygame.sprite.Sprite):
 
     def update(self, *args):
         pass
+        self.animation()
 
     def animation(self):
         if self.num_of_sprite % 3 == 0:
@@ -27,3 +33,7 @@ class HelicopterLeft(pygame.sprite.Sprite):
         else:
             self.image = self.third_image
         self.num_of_sprite += 1
+
+
+class HelicopterRight(Helicopter):
+    pass

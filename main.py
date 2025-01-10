@@ -1,8 +1,7 @@
-import pygame
+import init_pygame
 from MainWindow import MainWindow
 
-pygame.init()
-
 if __name__ == '__main__':
-    window = MainWindow()
-    window.run()
+    if init_pygame.get_pygame_init():
+        window = MainWindow()
+        window.run()
