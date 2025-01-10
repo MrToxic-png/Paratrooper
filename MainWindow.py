@@ -8,9 +8,19 @@ class MainWindow:
         pass
 
     def show_intro(self):
-        pass
+        print('show')
+        image = pygame.image.load('images/intro.png')
+        main_screen.blit(image, (0, 0))
+        pygame.display.flip()
 
     def run(self):
+        self.show_intro()
+        while True:
+            event = pygame.event.wait()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    break
+
         clock = pygame.time.Clock()
         running = True
         screen = pygame.display.set_mode((width, height))
