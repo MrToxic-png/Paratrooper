@@ -22,7 +22,8 @@ class HelicopterLeft(Helicopter):
 
     def update(self, *args):
         pass
-        self.animation()
+        if not args:
+            self.animation()
 
     def animation(self):
         if self.num_of_sprite % 3 == 0:

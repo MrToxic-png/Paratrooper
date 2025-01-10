@@ -43,6 +43,4 @@ class MainWindow:
             all_sprites.draw(screen)
             pygame.display.flip()
             clock.tick(fps)
-            for i in all_sprites:
-                i.animation()
         pygame.quit()
