@@ -1,6 +1,6 @@
 import pygame
 
-from Enemies import HelicopterLeft
+from Enemies import HelicopterLeft, HelicopterRight
 
 size = width, height = 800, 600
 fps = 30
@@ -32,6 +32,7 @@ class MainWindow:
         all_sprites = pygame.sprite.Group()
 
         HelicopterLeft(all_sprites)
+        HelicopterRight(all_sprites)
 
         while running:
             main_screen.fill((0, 0, 0))
