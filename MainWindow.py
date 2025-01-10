@@ -1,6 +1,10 @@
 import pygame
+
 from Enemies import HelicopterLeft
-from init_pygame import width, height, fps, main_screen
+
+size = width, height = 800, 600
+fps = 30
+main_screen = pygame.display.set_mode((width, height))
 
 
 class MainWindow:
@@ -27,8 +31,7 @@ class MainWindow:
 
         all_sprites = pygame.sprite.Group()
 
-        for _ in range(20):
-            HelicopterLeft(all_sprites)
+        HelicopterLeft(all_sprites)
 
         while running:
             main_screen.fill((0, 0, 0))
@@ -40,4 +43,6 @@ class MainWindow:
             all_sprites.draw(screen)
             pygame.display.flip()
             clock.tick(fps)
+            for i in all_sprites:
+                i.animation()
         pygame.quit()

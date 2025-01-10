@@ -1,8 +1,7 @@
 from random import randrange
-
-import LoadImages
 import pygame
 
+import LoadImages
 
 class Helicopter(pygame.sprite.Sprite):
     pass
@@ -18,7 +17,7 @@ class HelicopterLeft(Helicopter):
         self.num_of_sprite = 0
         self.image = HelicopterLeft.first_image
         self.rect = self.image.get_rect()
-        self.rect.x = randrange(0, 1)
+        self.rect.x = -100
         self.rect.y = randrange(10, 50)
 
     def update(self, *args):
@@ -33,6 +32,7 @@ class HelicopterLeft(Helicopter):
         else:
             self.image = self.third_image
         self.num_of_sprite += 1
+        self.rect.x += 3
 
 
 class HelicopterRight(Helicopter):
