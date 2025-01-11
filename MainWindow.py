@@ -1,10 +1,7 @@
 import pygame
 
-from Enemies import HelicopterLeft, HelicopterRight
-
-size = width, height = 800, 600
-fps = 30
-main_screen = pygame.display.set_mode((width, height))
+from Sprites import HelicopterLeft, HelicopterRight
+from init_pygame import width, height, fps, main_screen
 
 
 class MainWindow:
@@ -12,7 +9,6 @@ class MainWindow:
         pass
 
     def show_intro(self):
-        print('show')
         image = pygame.image.load('images/intro.png')
         main_screen.blit(image, (0, 0))
         pygame.display.flip()
