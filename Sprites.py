@@ -60,9 +60,9 @@ class Helicopter(pygame.sprite.Sprite):
 
 
 class HelicopterLeft(Helicopter):
-    first_image = load_image('images/helicopter_left_1.png')
-    second_image = load_image('images/helicopter_left_2.png')
-    third_image = load_image('images/helicopter_left_3.png')
+    first_image = load_image('images/aviation/helicopter_left_1.png')
+    second_image = load_image('images/aviation/helicopter_left_2.png')
+    third_image = load_image('images/aviation/helicopter_left_3.png')
 
     height = 50
 
@@ -72,12 +72,14 @@ class HelicopterLeft(Helicopter):
 
     def move(self):
         self.rect.x += 3
+        if self.rect.x > 900:
+            self.rect.x = -73
 
 
 class HelicopterRight(Helicopter):
-    first_image = load_image('images/helicopter_right_1.png')
-    second_image = load_image('images/helicopter_right_2.png')
-    third_image = load_image('images/helicopter_right_3.png')
+    first_image = load_image('images/aviation/helicopter_right_1.png')
+    second_image = load_image('images/aviation/helicopter_right_2.png')
+    third_image = load_image('images/aviation/helicopter_right_3.png')
 
     height = 10
 
@@ -88,19 +90,70 @@ class HelicopterRight(Helicopter):
     def animation(self):
         self.image = next(self.image_cycle)
         self.rect.x -= 3
+        if self.rect.x < -173:
+            self.rect.x = 800
 
 
 class Jet(pygame.sprite.Sprite):
     """Спрайт реактивного самолета"""
-    pass
+    first_image: pygame.Surface | None = None
+    second_image: pygame.Surface | None = None
+    third_image: pygame.Surface | None = None
+    height: int | None = None
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
+        self.image = self.first_image
+        self.rect = self.image.get_rect()
+        self.rect.y = self.height
+
+    def update(self, *args, **kwargs):
+        pass
+        if not args:
+            self.animation()
+
+    def animation(self):
+        self.image = next(self.image_cycle)
+        self.move()
+
+    def move(self):
+        return
 
 
 class JetLeft(Jet):
-    pass
+    first_image = load_image('images/aviation/jet_left_1.png')
+    second_image = load_image('images/aviation/jet_left_2.png')
+    third_image = load_image('images/aviation/jet_left_3.png')
+
+    height = 50
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.rect.x = -73
+
+    def move(self):
+        self.rect.x += 4
+        if self.rect.x > 900:
+            self.rect.x = -73
 
 
 class JetRight(Jet):
-    pass
+    first_image = load_image('images/aviation/jet_right_1.png')
+    second_image = load_image('images/aviation/jet_right_2.png')
+    third_image = load_image('images/aviation/jet_right_3.png')
+
+    height = 10
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.rect.x = 800
+
+    def animation(self):
+        self.image = next(self.image_cycle)
+        self.rect.x -= 4
+        if self.rect.x < -173:
+            self.rect.x = 800
 
 
 class Bomb(pygame.sprite.Sprite):
