@@ -256,4 +256,26 @@ class Gun(pygame.sprite.Sprite):
 
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
-    pass
+    parachute_image = load_image('images/bullet.png')
+
+    height = 600
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.image = self.parachute_image
+        self.rect = self.image.get_rect()
+        self.rect.x = 100
+        self.rect.y = self.height
+
+    def update(self, *args, **kwargs):
+        if self.rect.y <= 0:
+            self.kill()
+        else:
+            self.move()
+
+    def animation(self):
+        pass
+
+    def move(self):
+        self.rect.x += 2
+        self.rect.y -= 4
