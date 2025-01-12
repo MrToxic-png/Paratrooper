@@ -1,6 +1,6 @@
 import pygame
 
-from Sprites import HelicopterLeft, HelicopterRight
+from Sprites import HelicopterLeft, HelicopterRight, JetRight, JetLeft, Bomb, Paratrooper, Parachute, Bullet
 from init_pygame import width, height, fps, main_screen
 
 
@@ -9,7 +9,7 @@ class MainWindow:
         pass
 
     def show_intro(self):
-        image = pygame.image.load('images/intro.png')
+        image = pygame.image.load('images/aviation/intro.png')
         main_screen.blit(image, (0, 0))
         pygame.display.flip()
 
@@ -27,8 +27,11 @@ class MainWindow:
 
         all_sprites = pygame.sprite.Group()
 
-        HelicopterLeft(all_sprites)
-        HelicopterRight(all_sprites)
+        JetRight(all_sprites)
+        JetLeft(all_sprites)
+        Paratrooper(all_sprites)
+        Parachute(all_sprites)
+        Bullet(all_sprites)
 
         while running:
             main_screen.fill((0, 0, 0))
