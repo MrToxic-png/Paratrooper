@@ -1,5 +1,6 @@
 import itertools
 import os
+from asyncio import wait_for
 
 import pygame
 
@@ -158,17 +159,94 @@ class JetRight(Jet):
 
 class Bomb(pygame.sprite.Sprite):
     """Спрайт бомбы, сбрасываемой самолетом"""
-    pass
+    bomb_image = load_image('images/bomb.png')
+    list_of_explosions = []
+    for i in range(1, 10):
+        list_of_explosions.append('images/bomb_explosion/explode_' + str(i) + '.png')
+
+    height = 10
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.image_cycle = itertools.cycle(tuple(self.list_of_explosions))
+        self.image = self.bomb_image
+        self.rect = self.image.get_rect()
+        self.rect.x = 20
+        self.rect.y = self.height
+
+    def update(self, *args, **kwargs):
+        if self.rect.y >= 590:
+            self.animation()
+        else:
+            self.move()
+
+    def animation(self):
+        pass
+
+    def move(self):
+        self.rect.y += 5
 
 
 class Paratrooper(pygame.sprite.Sprite):
     """Спрайт парашютиста"""
-    pass
+    paratrooper_image = load_image('images/trooper.png')
+    list_of_divs = []
+    for i in range(1, 3):
+        list_of_divs.append('images/divs/div_' + str(i) + '.png')
+
+    height = 30
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.image_cycle = itertools.cycle(tuple(self.list_of_divs))
+        self.image = self.paratrooper_image
+        self.rect = self.image.get_rect()
+        self.rect.x = 10
+        self.rect.y = self.height
+
+    def update(self, *args, **kwargs):
+        if self.rect.y >= 580:
+            self.animation()
+        else:
+            self.move()
+
+    def animation(self):
+        pass
+
+    def move(self):
+        if self.rect.y <= 300:
+            self.rect.y += 5
+        else:
+            self.rect.y += 3
 
 
 class Parachute(pygame.sprite.Sprite):
     """Спрайт парашюта"""
-    pass
+    parachute_image = load_image('images/para.png')
+
+    height = 0
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.image = self.parachute_image
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = self.height
+
+    def update(self, *args, **kwargs):
+        if self.rect.y >= 550:
+            self.kill()
+        else:
+            self.move()
+
+    def animation(self):
+        pass
+
+    def move(self):
+        if self.rect.y <= 270:
+            self.rect.y += 5
+        else:
+            self.rect.y += 3
 
 
 class Gun(pygame.sprite.Sprite):
