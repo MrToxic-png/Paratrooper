@@ -2,6 +2,8 @@ import itertools
 import os
 from asyncio import wait_for
 
+from init_pygame import width
+
 import pygame
 
 
@@ -279,3 +281,11 @@ class Bullet(pygame.sprite.Sprite):
     def move(self):
         self.rect.x += 2
         self.rect.y -= 4
+
+
+class Ground(pygame.sprite.Sprite):
+    """Плоскость, на которую приземляются парашютисты"""
+    ground_image = pygame.Surface((width, 2), pygame.SRCALPHA, 32)
+
+    def __init__(self, *groups):
+        super().__init__(*groups)
