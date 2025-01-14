@@ -254,13 +254,22 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    def __init__(self, scr, *groups):
+    def __init__(self, *groups):
         super().__init__(*groups)
+        self.angle = 0
+        self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = 360, 460
+
+    def draw(self):
+        pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
+        pygame.draw.rect(self.image, (255, 84, 255), (27, 35, 25, 20))
+        pygame.draw.ellipse(self.image, (255, 84, 255), (27, 25, 25, 20))
 
     def update(self, *args, **kwargs):
         pass
         if not args:
-            pass
+            self.draw()
 
     def animation(self):
         pass
