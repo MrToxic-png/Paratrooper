@@ -3,6 +3,7 @@ import os
 from asyncio import wait_for
 
 import pygame
+from pygame.examples.go_over_there import screen
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -251,7 +252,20 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    pass
+
+    def __init__(self, scr, *groups):
+        super().__init__(*groups)
+        self.screen = scr
+        pygame.draw.rect(self.screen, (255, 255, 255), (360, 515, 80, 60))
+
+    def update(self, *args, **kwargs):
+        pass
+
+    def animation(self):
+        pass
+
+    def move(self):
+        pass
 
 
 class Bullet(pygame.sprite.Sprite):

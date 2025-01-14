@@ -1,6 +1,6 @@
 import pygame
 
-from Sprites import HelicopterLeft, HelicopterRight, JetRight, JetLeft, Bomb, Paratrooper, Parachute, Bullet
+from Sprites import HelicopterLeft, HelicopterRight, JetRight, JetLeft, Bomb, Paratrooper, Parachute, Bullet, Gun
 from init_pygame import width, height, fps, main_screen
 
 
@@ -32,6 +32,7 @@ class MainWindow:
         Paratrooper(all_sprites)
         Parachute(all_sprites)
         Bullet(all_sprites)
+        Gun(screen, all_sprites)
 
         while running:
             main_screen.fill((0, 0, 0))
