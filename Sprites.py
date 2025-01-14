@@ -256,14 +256,11 @@ class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
     def __init__(self, scr, *groups):
         super().__init__(*groups)
-        self.screen = scr
 
     def update(self, *args, **kwargs):
+        pass
         if not args:
-            if self.rect.y >= 550:
-                self.kill()
-            else:
-                self.move()
+            pass
 
     def animation(self):
         pass
