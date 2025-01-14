@@ -175,10 +175,11 @@ class Bomb(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y >= 590:
-            self.animation()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y >= 590:
+                self.animation()
+            else:
+                self.move()
 
     def animation(self):
         pass
@@ -205,10 +206,11 @@ class Paratrooper(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y >= 580:
-            self.animation()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y >= 580:
+                self.animation()
+            else:
+                self.move()
 
     def animation(self):
         pass
@@ -234,10 +236,11 @@ class Parachute(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y >= 550:
-            self.kill()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y >= 550:
+                self.kill()
+            else:
+                self.move()
 
     def animation(self):
         pass
@@ -251,7 +254,22 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    pass
+    def __init__(self, scr, *groups):
+        super().__init__(*groups)
+        self.screen = scr
+
+    def update(self, *args, **kwargs):
+        if not args:
+            if self.rect.y >= 550:
+                self.kill()
+            else:
+                self.move()
+
+    def animation(self):
+        pass
+
+    def move(self):
+        pass
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -268,10 +286,11 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y <= 0:
-            self.kill()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y <= 0:
+                self.kill()
+            else:
+                self.move()
 
     def animation(self):
         pass
