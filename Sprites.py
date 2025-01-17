@@ -1,10 +1,8 @@
 import itertools
 import os
-from asyncio import wait_for
+from math import cos, radians, sin
 
 import pygame
-
-from init_pygame import width
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -256,9 +254,14 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
+    left_angle = 210
+    right_angle = 330
+    center_x, center_y = 39, 33
+    gun_length = 35
+
     def __init__(self, *groups):
         super().__init__(*groups)
-        self.angle = 0
+        self.angle = 271
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
         self.rect = self.image.get_rect()
         self.second_x = 39
@@ -266,19 +269,28 @@ class Gun(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = 360, 460
 
     def draw(self):
+        end_gun_point = (self.gun_length * cos(radians(self.angle)) + self.center_x,
+                         self.gun_length * sin(radians(self.angle)) + self.center_y)
+
         self.image.fill((0, 0, 0))
         pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
-        pygame.draw.line(self.image, (85, 255, 255), (39, 33), (self.second_x, self.second_y), width=5)
+        # pygame.draw.aaline(self.image, (85, 255, 255), (self.center_x, self.center_y), end_gun_point)
+        pygame.draw.line(self.image, (85, 255, 255), (self.center_x, self.center_y), end_gun_point, width=8)
+
         pygame.draw.rect(self.image, (255, 84, 255), (27, 35, 25, 20))
-        pygame.draw.ellipse(self.image, (255, 84, 255), (27, 25, 25, 20))
+        pygame.draw.ellipse(self.image, (255, 84, 255), (27, 20, 25, 25))
         pygame.draw.rect(self.image, (85, 255, 255), (36, 30, 6, 6))
 
     def update(self, *args, **kwargs):
         if args and args[0].type == pygame.KEYDOWN:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_RIGHT]:
-                self.second_x += 1
-                self.second_y += 1
+                print(self.angle)
+                self.angle += 5
+            if keys[pygame.K_LEFT]:
+                self.angle -= 5
+            self.angle %= 360
+
         if not args:
             self.draw()
 
@@ -287,7 +299,6 @@ class Gun(pygame.sprite.Sprite):
 
     def move(self):
         pass
-
 
 
 class Bullet(pygame.sprite.Sprite):
