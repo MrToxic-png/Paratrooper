@@ -261,17 +261,24 @@ class Gun(pygame.sprite.Sprite):
         self.angle = 0
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
         self.rect = self.image.get_rect()
+        self.second_x = 39
+        self.second_y = 5
         self.rect.x, self.rect.y = 360, 460
 
     def draw(self):
+        self.image.fill((0, 0, 0))
         pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
-        pygame.draw.line(self.image, (85, 255, 255), (39, 33), (39, 5), width=5)
+        pygame.draw.line(self.image, (85, 255, 255), (39, 33), (self.second_x, self.second_y), width=5)
         pygame.draw.rect(self.image, (255, 84, 255), (27, 35, 25, 20))
         pygame.draw.ellipse(self.image, (255, 84, 255), (27, 25, 25, 20))
         pygame.draw.rect(self.image, (85, 255, 255), (36, 30, 6, 6))
 
     def update(self, *args, **kwargs):
-        pass
+        if args and args[0].type == pygame.KEYDOWN:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_RIGHT]:
+                self.second_x += 1
+                self.second_y += 1
         if not args:
             self.draw()
 
@@ -280,6 +287,7 @@ class Gun(pygame.sprite.Sprite):
 
     def move(self):
         pass
+
 
 
 class Bullet(pygame.sprite.Sprite):
