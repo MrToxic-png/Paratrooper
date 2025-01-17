@@ -259,9 +259,9 @@ class Gun(pygame.sprite.Sprite):
     center_x, center_y = 39, 33
     gun_length = 35
 
-    def __init__(self, groups):
-        super().__init__(groups)
-        self.sprites = groups
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.sprites = groups[0]
         self.is_moving = 0
         self.angle = 270
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
@@ -292,7 +292,7 @@ class Gun(pygame.sprite.Sprite):
                 self.is_moving = -1
             if keys[pygame.K_UP]:
                 self.is_moving = 0
-                Bullet(self.angle, self.end_gun_point, self.sprites)
+                Bullet(self.end_gun_point, self.sprites)
                 
 
         if not args:
@@ -312,11 +312,11 @@ class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
     bullet_image = load_image('images/bullet.png')
 
-    def __init__(self, angle, bullet_spawn_point, *groups):
+    def __init__(self, bullet_spawn_point, *groups):
         super().__init__(*groups)
-        self.angle = angle
         self.bullet_spawn_point = bullet_spawn_point
         self.image = self.bullet_image
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = self.bullet_spawn_point[0] + 360
         self.rect.y = self.bullet_spawn_point[1] + 460
@@ -327,9 +327,6 @@ class Bullet(pygame.sprite.Sprite):
                 self.kill()
             else:
                 self.move()
-
-    def animation(self):
-        pass
 
     def move(self):
         self.rect.x -= (39 - self.bullet_spawn_point[0]) // 5
