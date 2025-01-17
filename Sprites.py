@@ -4,6 +4,8 @@ from asyncio import wait_for
 
 import pygame
 
+from init_pygame import width
+
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
     """Функция для получения изображения из файла"""
@@ -263,8 +265,10 @@ class Gun(pygame.sprite.Sprite):
 
     def draw(self):
         pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
+        pygame.draw.line(self.image, (85, 255, 255), (39, 33), (39, 5), width=5)
         pygame.draw.rect(self.image, (255, 84, 255), (27, 35, 25, 20))
         pygame.draw.ellipse(self.image, (255, 84, 255), (27, 25, 25, 20))
+        pygame.draw.rect(self.image, (85, 255, 255), (36, 30, 6, 6))
 
     def update(self, *args, **kwargs):
         pass
