@@ -31,7 +31,6 @@ class MainWindow:
         JetLeft(all_sprites)
         Paratrooper(all_sprites)
         Parachute(all_sprites)
-        Bullet(all_sprites)
         Gun(all_sprites)
 
         while running:

@@ -254,14 +254,16 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    left_angle = 210
-    right_angle = 330
+    left_angle = 190
+    right_angle = 350
     center_x, center_y = 39, 33
     gun_length = 35
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
-        self.angle = 271
+    def __init__(self, groups):
+        super().__init__(groups)
+        self.sprites = groups
+        self.is_moving = 0
+        self.angle = 270
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
         self.rect = self.image.get_rect()
         self.second_x = 39
@@ -269,13 +271,13 @@ class Gun(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = 360, 460
 
     def draw(self):
-        end_gun_point = (self.gun_length * cos(radians(self.angle)) + self.center_x,
-                         self.gun_length * sin(radians(self.angle)) + self.center_y)
+        self.end_gun_point = tuple(map(lambda x: round(x), (self.gun_length * cos(radians(self.angle)) + self.center_x,
+                         self.gun_length * sin(radians(self.angle)) + self.center_y)))
 
         self.image.fill((0, 0, 0))
         pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
         # pygame.draw.aaline(self.image, (85, 255, 255), (self.center_x, self.center_y), end_gun_point)
-        pygame.draw.line(self.image, (85, 255, 255), (self.center_x, self.center_y), end_gun_point, width=8)
+        pygame.draw.line(self.image, (85, 255, 255), (self.center_x, self.center_y), self.end_gun_point, width=8)
 
         pygame.draw.rect(self.image, (255, 84, 255), (27, 35, 25, 20))
         pygame.draw.ellipse(self.image, (255, 84, 255), (27, 20, 25, 25))
@@ -285,34 +287,39 @@ class Gun(pygame.sprite.Sprite):
         if args and args[0].type == pygame.KEYDOWN:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_RIGHT]:
-                print(self.angle)
-                self.angle += 5
+                self.is_moving = 1
             if keys[pygame.K_LEFT]:
-                self.angle -= 5
-            self.angle %= 360
+                self.is_moving = -1
+            if keys[pygame.K_UP]:
+                self.is_moving = 0
+                Bullet(self.angle, self.end_gun_point, self.sprites)
+                
 
         if not args:
+            self.angle += 3 * self.is_moving
+            if self.is_moving == 1 and self.angle >= self.right_angle:
+                self.is_moving = 0
+                self.angle = self.right_angle
+            if self.is_moving == -1 and self.angle <= self.left_angle:
+                self.is_moving = 0
+                self.angle = self.left_angle
             self.draw()
+        self.angle %= 360
 
-    def animation(self):
-        pass
-
-    def move(self):
-        pass
 
 
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
-    parachute_image = load_image('images/bullet.png')
+    bullet_image = load_image('images/bullet.png')
 
-    height = 600
-
-    def __init__(self, *groups):
+    def __init__(self, angle, bullet_spawn_point, *groups):
         super().__init__(*groups)
-        self.image = self.parachute_image
+        self.angle = angle
+        self.bullet_spawn_point = bullet_spawn_point
+        self.image = self.bullet_image
         self.rect = self.image.get_rect()
-        self.rect.x = 100
-        self.rect.y = self.height
+        self.rect.x = self.bullet_spawn_point[0] + 360
+        self.rect.y = self.bullet_spawn_point[1] + 460
 
     def update(self, *args, **kwargs):
         if not args:
@@ -325,5 +332,5 @@ class Bullet(pygame.sprite.Sprite):
         pass
 
     def move(self):
-        self.rect.x += 2
-        self.rect.y -= 4
+        self.rect.x -= (39 - self.bullet_spawn_point[0]) // 5
+        self.rect.y -= (33 - self.bullet_spawn_point[1]) // 5
