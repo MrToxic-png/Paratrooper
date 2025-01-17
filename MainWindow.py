@@ -32,7 +32,7 @@ class MainWindow:
         Paratrooper(all_sprites)
         Parachute(all_sprites)
         Bullet(all_sprites)
-        Gun(screen, all_sprites)
+        Gun(all_sprites)
 
         while running:
             main_screen.fill((0, 0, 0))

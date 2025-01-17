@@ -3,7 +3,6 @@ import os
 from asyncio import wait_for
 
 import pygame
-from pygame.examples.go_over_there import screen
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -176,10 +175,11 @@ class Bomb(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y >= 590:
-            self.animation()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y >= 590:
+                self.animation()
+            else:
+                self.move()
 
     def animation(self):
         pass
@@ -206,10 +206,11 @@ class Paratrooper(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y >= 580:
-            self.animation()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y >= 580:
+                self.animation()
+            else:
+                self.move()
 
     def animation(self):
         pass
@@ -235,10 +236,11 @@ class Parachute(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y >= 550:
-            self.kill()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y >= 550:
+                self.kill()
+            else:
+                self.move()
 
     def animation(self):
         pass
@@ -252,14 +254,22 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-
-    def __init__(self, scr, *groups):
+    def __init__(self, *groups):
         super().__init__(*groups)
-        self.screen = scr
-        pygame.draw.rect(self.screen, (255, 255, 255), (360, 515, 80, 60))
+        self.angle = 0
+        self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = 360, 460
+
+    def draw(self):
+        pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
+        pygame.draw.rect(self.image, (255, 84, 255), (27, 35, 25, 20))
+        pygame.draw.ellipse(self.image, (255, 84, 255), (27, 25, 25, 20))
 
     def update(self, *args, **kwargs):
         pass
+        if not args:
+            self.draw()
 
     def animation(self):
         pass
@@ -282,10 +292,11 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = self.height
 
     def update(self, *args, **kwargs):
-        if self.rect.y <= 0:
-            self.kill()
-        else:
-            self.move()
+        if not args:
+            if self.rect.y <= 0:
+                self.kill()
+            else:
+                self.move()
 
     def animation(self):
         pass
