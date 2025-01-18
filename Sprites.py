@@ -2,9 +2,9 @@ import itertools
 import os
 from math import cos, radians, sin
 
-from init_pygame import width
-
 import pygame
+
+from init_pygame import width
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -29,10 +29,14 @@ class SpriteGroups:
     left_helicopter_group = pygame.sprite.Group()
     right_helicopter_group = pygame.sprite.Group()
     jet_group = pygame.sprite.Group()
+    left_jet_group = pygame.sprite.Group()
+    right_jet_group = pygame.sprite.Group()
     parachute_group = pygame.sprite.Group()
     paratrooper_group = pygame.sprite.Group()
     bomb_group = pygame.sprite.Group()
+    gun_group = pygame.sprite.Group()
     bullet_group = pygame.sprite.Group()
+    ground_group = pygame.sprite.Group()
 
 
 class Helicopter(pygame.sprite.Sprite):
@@ -69,8 +73,11 @@ class HelicopterLeft(Helicopter):
 
     height = 50
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.enemies_group,
+                         SpriteGroups.helicopter_group,
+                         SpriteGroups.left_helicopter_group)
         self.rect.x = -73
 
     def move(self):
@@ -86,8 +93,11 @@ class HelicopterRight(Helicopter):
 
     height = 10
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.enemies_group,
+                         SpriteGroups.helicopter_group,
+                         SpriteGroups.right_helicopter_group)
         self.rect.x = 800
 
     def animation(self):
@@ -131,8 +141,11 @@ class JetLeft(Jet):
 
     height = 50
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.enemies_group,
+                         SpriteGroups.jet_group,
+                         SpriteGroups.left_jet_group)
         self.rect.x = -73
 
     def move(self):
@@ -148,8 +161,11 @@ class JetRight(Jet):
 
     height = 10
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.enemies_group,
+                         SpriteGroups.jet_group,
+                         SpriteGroups.right_jet_group)
         self.rect.x = 800
 
     def animation(self):
@@ -168,8 +184,10 @@ class Bomb(pygame.sprite.Sprite):
 
     height = 10
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.enemies_group,
+                         SpriteGroups.bomb_group)
         self.image_cycle = itertools.cycle(tuple(self.list_of_explosions))
         self.image = self.bomb_image
         self.rect = self.image.get_rect()
@@ -199,13 +217,17 @@ class Paratrooper(pygame.sprite.Sprite):
 
     height = 30
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.enemies_group,
+                         SpriteGroups.paratrooper_group)
         self.image_cycle = itertools.cycle(tuple(self.list_of_divs))
         self.image = self.paratrooper_image
         self.rect = self.image.get_rect()
         self.rect.x = 10
         self.rect.y = self.height
+
+        self.parachute = Parachute(self)
 
     def update(self, *args, **kwargs):
         if not args:
@@ -218,10 +240,13 @@ class Paratrooper(pygame.sprite.Sprite):
         pass
 
     def move(self):
-        if self.rect.y <= 300:
-            self.rect.y += 5
-        else:
-            self.rect.y += 3
+        if self.parachute is not None:
+            if pygame.sprite.spritecollideany(self, SpriteGroups.ground_group):
+                self.parachute.kill()
+                self.parachute = None
+            else:
+                self.rect.y += 3
+                self.parachute.move()
 
 
 class Parachute(pygame.sprite.Sprite):
@@ -230,28 +255,26 @@ class Parachute(pygame.sprite.Sprite):
 
     height = 0
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self, host: Paratrooper):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.enemies_group,
+                         SpriteGroups.parachute_group)
         self.image = self.parachute_image
         self.rect = self.image.get_rect()
         self.rect.x = 0
         self.rect.y = self.height
 
+        self.host = host
+
     def update(self, *args, **kwargs):
         if not args:
-            if self.rect.y >= 550:
-                self.kill()
-            else:
-                self.move()
+            pass
 
     def animation(self):
         pass
 
     def move(self):
-        if self.rect.y <= 270:
-            self.rect.y += 5
-        else:
-            self.rect.y += 3
+        self.rect.y += 3
 
 
 class Gun(pygame.sprite.Sprite):
@@ -261,8 +284,9 @@ class Gun(pygame.sprite.Sprite):
     center_x, center_y = 39, 33
     gun_length = 35
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.gun_group)
         self.angle = 271
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
         self.rect = self.image.get_rect()
@@ -309,8 +333,9 @@ class Bullet(pygame.sprite.Sprite):
 
     height = 600
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.bullet_group)
         self.image = self.parachute_image
         self.rect = self.image.get_rect()
         self.rect.x = 100
@@ -334,6 +359,16 @@ class Bullet(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     """Плоскость, на которую приземляются парашютисты"""
     ground_image = pygame.Surface((width, 2), pygame.SRCALPHA, 32)
+    pygame.draw.rect(ground_image, (130, 236, 232), (0, 0, width, 2))
 
-    def __init__(self, *groups):
-        super().__init__(*groups)
+    def __init__(self):
+        super().__init__(SpriteGroups.main_group,
+                         SpriteGroups.ground_group)
+        self.image = self.ground_image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = 0, 575
+
+
+# Данные спрайты существуют в единственном экземпляре с начала игры, поэтому их можно сразу инициализировать
+gun = Gun()
+ground = Ground()
