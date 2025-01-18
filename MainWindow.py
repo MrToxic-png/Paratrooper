@@ -1,6 +1,6 @@
 import pygame
 
-from Sprites import JetRight, JetLeft, Paratrooper, Bullet, SpriteGroups
+from Sprites import JetRight, JetLeft, Paratrooper, SpriteGroups
 from init_pygame import width, height, fps, main_screen
 
 
@@ -28,7 +28,6 @@ class MainWindow:
         JetRight()
         JetLeft()
         Paratrooper()
-        Bullet()
 
         while running:
             main_screen.fill((0, 0, 0))

@@ -4,6 +4,8 @@ from math import cos, radians, sin
 
 import pygame
 
+from init_pygame import width
+
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
     """Функция для получения изображения из файла"""
@@ -295,7 +297,8 @@ class Gun(pygame.sprite.Sprite):
 
     def draw(self):
         self.end_gun_point = tuple(map(lambda x: round(x), (self.gun_length * cos(radians(self.angle)) + self.center_x,
-                         self.gun_length * sin(radians(self.angle)) + self.center_y)))
+                                                            self.gun_length * sin(
+                                                                radians(self.angle)) + self.center_y)))
 
         self.image.fill((0, 0, 0))
         pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
@@ -315,8 +318,7 @@ class Gun(pygame.sprite.Sprite):
                 self.is_moving = -1
             if keys[pygame.K_UP]:
                 self.is_moving = 0
-                Bullet(self.end_gun_point, self.sprites)
-
+                Bullet(self.end_gun_point)
 
         if not args:
             self.angle += 3 * self.is_moving
@@ -328,7 +330,6 @@ class Gun(pygame.sprite.Sprite):
                 self.angle = self.left_angle
             self.draw()
         self.angle %= 360
-
 
 
 class Bullet(pygame.sprite.Sprite):
