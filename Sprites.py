@@ -1,5 +1,6 @@
 import itertools
 import os
+from itertools import count
 from math import cos, radians, sin
 
 import pygame
@@ -315,24 +316,34 @@ class Bullet(pygame.sprite.Sprite):
 
     def __init__(self, bullet_spawn_point, *groups):
         super().__init__(*groups)
+        list_of_booms = []
+        for i in range(1, 11):
+            list_of_booms.append(load_image(f'images/aviation_explosion/enemy_explosion_{i}.png'))
+        self.boom_images = itertools.cycle(tuple(list_of_booms))
         self.bullet_spawn_point = bullet_spawn_point
         self.image = self.bullet_image
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = self.bullet_spawn_point[0] + 360
         self.rect.y = self.bullet_spawn_point[1] + 460
+        self.count = 0
 
     def update(self, *args, **kwargs):
         if not args:
+            if self.count != 0:
+                self.image = next(self.boom_images)
+                self.count += 1
+                if self.count == 10:
+                    self.kill()
             if self.rect.y <= 0:
                 self.kill()
-            else:
+            elif self.count == 0:
                 self.move()
             collided_jets = pygame.sprite.spritecollide(self, SpriteGroups.jet_group, False, pygame.sprite.collide_mask)
             if collided_jets:
                 for jet in collided_jets:
                     jet.kill()
-                self.kill()
+                    self.count = 1
 
     def move(self):
         self.rect.x -= (39 - self.bullet_spawn_point[0]) // 5
