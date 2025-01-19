@@ -1,6 +1,7 @@
 import pygame
 
-from Sprites import HelicopterLeft, HelicopterRight, JetRight, JetLeft, Bomb, Paratrooper, Parachute, Bullet, Gun
+from Sprites import HelicopterLeft, HelicopterRight, JetRight, JetLeft, Bomb, Paratrooper, Parachute, Bullet, Gun, \
+    SpriteGroups
 from init_pygame import width, height, fps, main_screen
 
 
@@ -27,8 +28,8 @@ class MainWindow:
 
         all_sprites = pygame.sprite.Group()
 
-        JetRight(all_sprites)
-        JetLeft(all_sprites)
+        JetRight(all_sprites, SpriteGroups.jet_group)
+        JetLeft(all_sprites, SpriteGroups.jet_group)
         Paratrooper(all_sprites)
         Parachute(all_sprites)
         Gun(all_sprites)

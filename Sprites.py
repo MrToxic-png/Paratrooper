@@ -73,7 +73,7 @@ class HelicopterLeft(Helicopter):
 
     def move(self):
         self.rect.x += 3
-        if self.rect.x > 900:
+        if self.rect.x > 800:
             self.rect.x = -73
 
 
@@ -91,7 +91,7 @@ class HelicopterRight(Helicopter):
     def animation(self):
         self.image = next(self.image_cycle)
         self.rect.x -= 3
-        if self.rect.x < -173:
+        if self.rect.x < -73:
             self.rect.x = 800
 
 
@@ -106,6 +106,7 @@ class Jet(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
         self.image = self.first_image
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.y = self.height
 
@@ -135,7 +136,7 @@ class JetLeft(Jet):
 
     def move(self):
         self.rect.x += 4
-        if self.rect.x > 900:
+        if self.rect.x > 800:
             self.rect.x = -73
 
 
@@ -153,7 +154,7 @@ class JetRight(Jet):
     def animation(self):
         self.image = next(self.image_cycle)
         self.rect.x -= 4
-        if self.rect.x < -173:
+        if self.rect.x < -73:
             self.rect.x = 800
 
 
@@ -292,7 +293,7 @@ class Gun(pygame.sprite.Sprite):
                 self.is_moving = -1
             if keys[pygame.K_UP]:
                 self.is_moving = 0
-                Bullet(self.end_gun_point, self.sprites)
+                Bullet(self.end_gun_point, self.sprites, SpriteGroups.bullet_group)
                 
 
         if not args:
@@ -327,6 +328,11 @@ class Bullet(pygame.sprite.Sprite):
                 self.kill()
             else:
                 self.move()
+            collided_jets = pygame.sprite.spritecollide(self, SpriteGroups.jet_group, False, pygame.sprite.collide_mask)
+            if collided_jets:
+                for jet in collided_jets:
+                    jet.kill()
+                self.kill()
 
     def move(self):
         self.rect.x -= (39 - self.bullet_spawn_point[0]) // 5
