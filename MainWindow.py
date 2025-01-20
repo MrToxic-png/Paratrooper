@@ -1,7 +1,6 @@
 import pygame
 
-from Sprites import HelicopterLeft, HelicopterRight, JetRight, JetLeft, Bomb, Paratrooper, Parachute, Bullet, Gun, \
-    SpriteGroups
+from Sprites import JetRight, JetLeft, Paratrooper, SpriteGroups
 from init_pygame import width, height, fps, main_screen
 
 
@@ -26,22 +25,18 @@ class MainWindow:
         running = True
         screen = pygame.display.set_mode((width, height))
 
-        all_sprites = pygame.sprite.Group()
-
-        JetRight(all_sprites, SpriteGroups.jet_group)
-        JetLeft(all_sprites, SpriteGroups.jet_group)
-        Paratrooper(all_sprites)
-        Parachute(all_sprites)
-        Gun(all_sprites)
+        JetRight()
+        JetLeft()
+        Paratrooper()
 
         while running:
             main_screen.fill((0, 0, 0))
             for event in pygame.event.get():
-                all_sprites.update(event)
+                SpriteGroups.main_group.update(event)
                 if event.type == pygame.QUIT:
                     running = False
-            all_sprites.update()
-            all_sprites.draw(screen)
+            SpriteGroups.main_group.update()
+            SpriteGroups.main_group.draw(screen)
             pygame.display.flip()
             clock.tick(fps)
         pygame.quit()
