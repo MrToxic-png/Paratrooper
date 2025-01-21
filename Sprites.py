@@ -40,7 +40,7 @@ class SpriteGroups:
 
 
 _flying_velocity = 180
-_g_const = 10
+_g_const = 200
 
 
 class _AbstractHelicopter(pygame.sprite.Sprite):
@@ -190,44 +190,42 @@ class _AbstractBomb(pygame.sprite.Sprite):
                          SpriteGroups.bomb_group)
         self.image = self.bomb_image
         self.rect = self.image.get_rect()
-        self.start_point: tuple[int, int] | None = None
+        self.current_x: float | None = None
+        self.current_y: float | None = None
         self.horizontal_velocity: int | None = None
+        self.vertical_velocity = 0
 
     def move(self):
         """Перемещение бомбы"""
+        vertical_velocity_delta = _g_const / fps
+        self.vertical_velocity += vertical_velocity_delta
 
+        vertical_displacement = self.vertical_velocity / fps
+        horizontal_displacement = self.horizontal_velocity / fps
 
-class Bomb(pygame.sprite.Sprite):
-    """Спрайт бомбы, сбрасываемой самолетом"""
-    bomb_image = load_image('images/bomb.png')
-    list_of_explosions = []
-    for i in range(1, 10):
-        list_of_explosions.append('images/bomb_explosion/explode_' + str(i) + '.png')
+        self.current_x += horizontal_displacement
+        self.current_y += vertical_displacement
 
-    height = 10
-
-    def __init__(self):
-        super().__init__(SpriteGroups.main_group,
-                         SpriteGroups.enemies_group,
-                         SpriteGroups.bomb_group)
-        self.image_cycle = itertools.cycle(tuple(self.list_of_explosions))
-        self.image = self.bomb_image
-        self.rect = self.image.get_rect()
-        self.rect.x = 20
-        self.rect.y = self.height
+        self.rect.x = self.current_x
+        self.rect.y = self.current_y
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.rect.y >= 590:
-                self.animation()
-            else:
-                self.move()
+            self.move()
 
-    def animation(self):
-        pass
 
-    def move(self):
-        self.rect.y += 5
+class Bomb(_AbstractBomb):
+    """Спрайт бомбы, сбрасываемой самолетом"""
+    def __init__(self, way: str, x: int, y: int):
+        super().__init__()
+
+        velocity_dict = {'left': -_flying_velocity, 'right': _flying_velocity}
+        if way not in velocity_dict:
+            raise ValueError('way argument must be "left" or "right"')
+
+        self.horizontal_velocity = velocity_dict[way]
+        self.current_x = x
+        self.current_y = y
 
 
 class Paratrooper(pygame.sprite.Sprite):
