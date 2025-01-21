@@ -282,8 +282,12 @@ class Paratrooper(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 10
         self.rect.y = self.height
+        self.is_moving = True
 
-        self.parachute = Parachute(self)
+        self.no_parachute_speed = 120
+        self.with_parachute_speed = 60
+
+        self.parachute = None
 
     def update(self, *args, **kwargs):
         if not args:
@@ -300,22 +304,27 @@ class Paratrooper(pygame.sprite.Sprite):
             if pygame.sprite.spritecollideany(self, SpriteGroups.ground_group):
                 self.parachute.kill()
                 self.parachute = None
+                self.is_moving = False
             else:
                 # Нужно будет переписать:
                 # задать константы: скорость падения парашютиста с парашютом и без него
                 # далее реализовать метод через вычисление: displacement = fps / (константная скорость)
                 # и добавлять displacement к координатам
                 # Потом удалить это ^^^^
-
-                self.rect.y += 3
+                displacement = self.with_parachute_speed // fps
+                self.rect.y += displacement
                 self.parachute.move()
+        elif  self.is_moving:
+            displacement = self.no_parachute_speed // fps
+            self.rect.y += displacement
+            if self.rect.y >= 375:
+                self.parachute = Parachute(self)
 
 
 class Parachute(pygame.sprite.Sprite):
     """Спрайт парашюта"""
     parachute_image = load_image('images/para.png')
 
-    height = 0
 
     def __init__(self, host: Paratrooper):
         super().__init__(SpriteGroups.main_group,
@@ -323,8 +332,9 @@ class Parachute(pygame.sprite.Sprite):
                          SpriteGroups.parachute_group)
         self.image = self.parachute_image
         self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = self.height
+        self.rect.x = host.rect.x - 10
+        self.rect.y = host.rect.y - 30
+        self.speed = 60
 
         self.host = host
 
@@ -336,9 +346,8 @@ class Parachute(pygame.sprite.Sprite):
         pass
 
     def move(self):
-        # Здесь тоже следует реализовать через displacement
-        # Потом удалить это ^^^^
-        self.rect.y += 3
+        displacement = self.speed // fps
+        self.rect.y += displacement
 
 
 class Gun(pygame.sprite.Sprite):
