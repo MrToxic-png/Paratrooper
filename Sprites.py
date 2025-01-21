@@ -356,6 +356,9 @@ class Gun(pygame.sprite.Sprite):
     right_angle = 350
     center_x, center_y = 39, 33
     gun_length = 35
+    white_rect_x, white_rect_y = 0, 55
+    pink_part_x = 27
+    rect_part_pink_y = 35
 
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
@@ -364,27 +367,24 @@ class Gun(pygame.sprite.Sprite):
         self.angle = 270
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
         self.rect = self.image.get_rect()
-        self.second_x = 39
-        self.second_y = 5
         self.rect.x, self.rect.y = 360, 460
 
     def draw(self):
+        white_color = (255, 255, 255)
+        blue_color = (85, 255, 255)
+        pink_color = (255, 84, 255)
         self.end_gun_point = tuple(map(round, (self.gun_length * cos(radians(self.angle)) + self.center_x,
                                                self.gun_length * sin(radians(self.angle)) + self.center_y)))
 
         self.image.fill((0, 0, 0))
-        pygame.draw.rect(self.image, (255, 255, 255), (0, 55, 80, 60))
+        pygame.draw.rect(self.image, white_color, (self.white_rect_x, self.white_rect_y, 80, 60))
         # pygame.draw.aaline(self.image, (85, 255, 255), (self.center_x, self.center_y), end_gun_point)
-        pygame.draw.line(self.image, (85, 255, 255), (self.center_x, self.center_y), self.end_gun_point, width=8)
+        pygame.draw.line(self.image, blue_color, (self.center_x, self.center_y), self.end_gun_point, width=8)
 
-        pygame.draw.rect(self.image, (255, 84, 255), (27, 35, 25, 20))
-        pygame.draw.ellipse(self.image, (255, 84, 255), (27, 20, 25, 25))
-        pygame.draw.rect(self.image, (85, 255, 255), (36, 30, 6, 6))
+        pygame.draw.rect(self.image, pink_color, (self.pink_part_x, self.rect_part_pink_y, 25, 20))
+        pygame.draw.ellipse(self.image, pink_color, (self.pink_part_x, self.rect_part_pink_y - 15, 25, 25))
+        pygame.draw.rect(self.image, blue_color, (self.center_x - 3, self.center_y - 3, 6, 6))
 
-        # Многа циферок, подумай над моим предложением сделать две картинки png, которые будем блитать (к Сане)
-        # Или выдели из кода эти циферки так, чтобы они стали читаемы (тоже к Сане)
-        # Также если мы сделаем png, то решим (очень вероятно) проблему с острыми углами
-        # Потом удалить это ^^^^
 
     def update(self, *args, **kwargs):
         if args and args[0].type == pygame.KEYDOWN:
