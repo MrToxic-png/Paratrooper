@@ -24,6 +24,7 @@ def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
 class SpriteGroups:
     """Основные группы спрайтов, выделенные для игры"""
     main_group = pygame.sprite.Group()
+
     enemies_group = pygame.sprite.Group()
     enemy_aviation_group = pygame.sprite.Group()
     helicopter_group = pygame.sprite.Group()
@@ -35,9 +36,13 @@ class SpriteGroups:
     parachute_group = pygame.sprite.Group()
     paratrooper_group = pygame.sprite.Group()
     bomb_group = pygame.sprite.Group()
+
     gun_group = pygame.sprite.Group()
     bullet_group = pygame.sprite.Group()
+
     ground_group = pygame.sprite.Group()
+
+    explode_group = pygame.sprite.Group()
 
 
 _flying_velocity = 180
@@ -54,10 +59,6 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def __init__(self, *groups):
         super().__init__(*groups)
-        list_of_booms = []
-        for i in range(1, 11):
-            list_of_booms.append(load_image(f'images/aviation_explosion/enemy_explosion_{i}.png'))
-        self.boom_images = itertools.cycle(tuple(list_of_booms))
         self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
         self.image = self.first_image
         self.rect = self.image.get_rect()
@@ -67,32 +68,28 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.is_destroyed:
-                self.animate_destruction()
-            else:
-                self.animation()
+            self.animation()
 
     def animation(self):
+        """Анимация движения вертолета"""
         self.image = next(self.image_cycle)
         self.move()
 
     def move(self):
+        """Передвижение вертолета"""
         displacement = self.helicopter_velocity // fps
         self.rect.x += displacement
         if not self.rect.colliderect(main_screen.get_rect()):
             self.kill()
 
     def destroy(self):
-        self.is_destroyed = True
-        self.explosion_step = 0
-        self.image = next(self.boom_images)
+        """Уничтожение вертолета"""
+        explode_x, explode_y = self.rect.x, self.rect.y
+        self.kill()
+        Explode(explode_x, explode_y)
 
-    def animate_destruction(self):
-        if self.explosion_step <= 8:
-            self.image = next(self.boom_images)
-            self.explosion_step += 1
-        else:
-            self.kill()
+    def drop_paratrooper(self):
+        """Сброс парашютиста"""
 
 
 class HelicopterLeft(_AbstractHelicopter):
@@ -139,10 +136,6 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def __init__(self, *groups):
         super().__init__(*groups)
-        list_of_booms = []
-        for i in range(1, 11):
-            list_of_booms.append(load_image(f'images/aviation_explosion/enemy_explosion_{i}.png'))
-        self.boom_images = itertools.cycle(tuple(list_of_booms))
         self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
         self.image = self.first_image
         self.mask = pygame.mask.from_surface(self.image)
@@ -153,32 +146,28 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.is_destroyed:
-                self.animate_destruction()
-            else:
-                self.animation()
+            self.animation()
 
     def animation(self):
+        """Анимация движения самолета"""
         self.image = next(self.image_cycle)
         self.move()
 
     def move(self):
+        """Передвижение самолета"""
         displacement = self.jet_velocity // fps
         self.rect.x += displacement
         if not self.rect.colliderect(main_screen.get_rect()):
             self.kill()
 
     def destroy(self):
-        self.is_destroyed = True
-        self.explosion_step = 0
-        self.image = next(self.boom_images)
+        """Уничтожение самолета"""
+        explode_x, explode_y = self.rect.x, self.rect.y
+        self.kill()
+        Explode(explode_x, explode_y)
 
-    def animate_destruction(self):
-        if self.explosion_step <= 8:
-            self.image = next(self.boom_images)
-            self.explosion_step += 1
-        else:
-            self.kill()
+    def drop_bomb(self):
+        """Сброс бомбы"""
 
 
 class JetLeft(_AbstractJet):
@@ -247,6 +236,9 @@ class _AbstractBomb(pygame.sprite.Sprite):
         if not args:
             self.move()
 
+    def destroy(self):
+        """Уничтожение бомбы"""
+
 
 class Bomb(_AbstractBomb):
     """Спрайт бомбы, сбрасываемой самолетом"""
@@ -295,34 +287,34 @@ class Paratrooper(pygame.sprite.Sprite):
                 self.move()
 
     def animation(self):
-        pass
+        """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
 
     def move(self):
+        """Падение парашютиста"""
         if self.parachute is not None:
             if pygame.sprite.spritecollideany(self, SpriteGroups.ground_group):
                 self.parachute.kill()
                 self.parachute = None
                 self.is_moving = False
             else:
-                # Нужно будет переписать:
-                # задать константы: скорость падения парашютиста с парашютом и без него
-                # далее реализовать метод через вычисление: displacement = fps / (константная скорость)
-                # и добавлять displacement к координатам
-                # Потом удалить это ^^^^
                 displacement = self.with_parachute_speed // fps
                 self.rect.y += displacement
                 self.parachute.move()
-        elif  self.is_moving:
+        elif self.is_moving:
             displacement = self.no_parachute_speed // fps
             self.rect.y += displacement
             if self.rect.y >= 375:
                 self.parachute = Parachute(self)
+            # ^ Заметка: Высота раскрытия парашюта не фиксированное число, дальше решим, как сделаем
+
+    def destroy(self):
+        """Уничтожение парашютиста"""
+        pass
 
 
 class Parachute(pygame.sprite.Sprite):
     """Спрайт парашюта"""
     parachute_image = load_image('images/para.png')
-
 
     def __init__(self, host: Paratrooper):
         super().__init__(SpriteGroups.main_group,
@@ -330,7 +322,7 @@ class Parachute(pygame.sprite.Sprite):
                          SpriteGroups.parachute_group)
         self.image = self.parachute_image
         self.rect = self.image.get_rect()
-        self.rect.x = host.rect.x - 10
+        self.rect.x = host.rect.x - self.rect.w // 2 + host.rect.w // 2
         self.rect.y = host.rect.y - 30
         self.speed = 60
 
@@ -340,12 +332,14 @@ class Parachute(pygame.sprite.Sprite):
         if not args:
             pass
 
-    def animation(self):
-        pass
-
     def move(self):
+        """Передвижение парашюта"""
         displacement = self.speed // fps
         self.rect.y += displacement
+
+    def destroy(self):
+        """Уничтожение парашюта"""
+        pass
 
 
 class Gun(pygame.sprite.Sprite):
@@ -383,7 +377,6 @@ class Gun(pygame.sprite.Sprite):
         pygame.draw.ellipse(self.image, pink_color, (self.pink_part_x, self.rect_part_pink_y - 15, 25, 25))
         pygame.draw.rect(self.image, blue_color, (self.center_x - 3, self.center_y - 3, 6, 6))
 
-
     def update(self, *args, **kwargs):
         if args and args[0].type == pygame.KEYDOWN:
             keys = pygame.key.get_pressed()
@@ -405,6 +398,9 @@ class Gun(pygame.sprite.Sprite):
                 self.angle = self.left_angle
             self.draw()
         self.angle %= 360
+
+    def destroy(self):
+        """У пушки тоже должна быть анимация уничтожения с вызовом класса Explode"""
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -429,13 +425,13 @@ class Bullet(pygame.sprite.Sprite):
                 self.kill()
             else:
                 self.move()
-            collided_jets = pygame.sprite.spritecollide(self, SpriteGroups.enemy_aviation_group, False,
-                                                        pygame.sprite.collide_mask)
-            if collided_jets:
-                for jet in collided_jets:
-                    if not jet.is_destroyed:
-                        jet.destroy()
-                        self.kill()
+
+            collided_enemies = pygame.sprite.spritecollide(self, SpriteGroups.enemies_group, False,
+                                                           pygame.sprite.collide_mask)
+            if collided_enemies:
+                collided_enemy = collided_enemies[0]
+                collided_enemy.destroy()
+                self.kill()
 
     def move(self):
         self.rect.x -= (39 - self.bullet_spawn_point[0]) // 5
@@ -456,6 +452,42 @@ class Ground(pygame.sprite.Sprite):
         self.image = self.ground_image
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = 0, 575
+
+
+class Explode(pygame.sprite.Sprite):
+    """Спрайт с анимацией взрыва"""
+    explode_images = tuple(map(lambda number: load_image(f'images/aviation_explosion/enemy_explosion_{number}.png'),
+                               range(1, 11)))
+
+    def __init__(self, x: int, y: int):
+        super().__init__(SpriteGroups.main_group, SpriteGroups.explode_group)
+        self.image_iter = iter(self.explode_images)
+        self.image = next(self.image_iter)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+
+    def update(self, *args, **kwargs):
+        if args:
+            event = args[0]
+            # Здесь должна быть обработка кастомного события: Оно будет происходить с каким-то таймингом,
+            # чтобы анимация не была слишком быстрой
+
+            # Типа вот такого vvvvv
+            # if event.type == CustomEvent:
+            #     try:
+            #         self.image = next(self.image_iter)
+            #     except StopIteration:
+            #         self.kill()
+            pass
+
+
+class BombExplode(pygame.sprite.Sprite):
+    """Спрайт с анимацией взрыва бомбы"""
+
+
+class FallDeath(pygame.sprite.Sprite):
+    """Спрайт с анимацией смерти от падения
+    реализация должна быть примерно похожа на Explode"""
 
 
 # Данные спрайты существуют в единственном экземпляре с начала игры, поэтому их можно сразу инициализировать

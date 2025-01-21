@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 
 from Sprites import JetRight, JetLeft, Paratrooper, SpriteGroups, HelicopterLeft
@@ -13,30 +15,40 @@ class MainWindow:
         main_screen.blit(image, (0, 0))
         pygame.display.flip()
 
-    def run(self):
-        self.show_intro()
         while True:
             event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                self.terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     break
+                if event.key == pygame.K_i:
+                    self.show_instructions()
+
+    def show_instructions(self):
+        pass
+
+    def run(self):
+        self.show_intro()
 
         clock = pygame.time.Clock()
-        running = True
         screen = pygame.display.set_mode((width, height))
 
         JetRight()
         HelicopterLeft()
         Paratrooper()
 
-        while running:
+        while True:
             main_screen.fill((0, 0, 0))
             for event in pygame.event.get():
                 SpriteGroups.main_group.update(event)
                 if event.type == pygame.QUIT:
-                    running = False
+                    self.terminate()
             SpriteGroups.main_group.update()
             SpriteGroups.main_group.draw(screen)
             pygame.display.flip()
             clock.tick(fps)
+
+    def terminate(self):
         pygame.quit()
+        sys.exit()
