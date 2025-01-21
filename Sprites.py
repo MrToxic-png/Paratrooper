@@ -25,6 +25,7 @@ class SpriteGroups:
     """Основные группы спрайтов, выделенные для игры"""
     main_group = pygame.sprite.Group()
     enemies_group = pygame.sprite.Group()
+    enemy_aviation_group = pygame.sprite.Group()
     helicopter_group = pygame.sprite.Group()
     left_helicopter_group = pygame.sprite.Group()
     right_helicopter_group = pygame.sprite.Group()
@@ -53,15 +54,23 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def __init__(self, *groups):
         super().__init__(*groups)
+        list_of_booms = []
+        for i in range(1, 11):
+            list_of_booms.append(load_image(f'images/aviation_explosion/enemy_explosion_{i}.png'))
+        self.boom_images = itertools.cycle(tuple(list_of_booms))
         self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
         self.image = self.first_image
         self.rect = self.image.get_rect()
         self.rect.y = self.height
+        self.explosion_step = 0
+        self.is_destroyed = False
 
     def update(self, *args, **kwargs):
-        pass
         if not args:
-            self.animation()
+            if self.is_destroyed:
+                self.animate_destruction()
+            else:
+                self.animation()
 
     def animation(self):
         self.image = next(self.image_cycle)
@@ -74,10 +83,16 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
             self.kill()
 
     def destroy(self):
-        """Уничтожение вертолета
-        В данном методе нужно будет реализовать убийство спрайта,
-        появление анимации взрыва, звуковое сопровождение (возможно)"""
-        # Потом переписать/удалить это ^^^^
+        self.is_destroyed = True
+        self.explosion_step = 0
+        self.image = next(self.boom_images)
+
+    def animate_destruction(self):
+        if self.explosion_step <= 8:
+            self.image = next(self.boom_images)
+            self.explosion_step += 1
+        else:
+            self.kill()
 
 
 class HelicopterLeft(_AbstractHelicopter):
@@ -92,7 +107,8 @@ class HelicopterLeft(_AbstractHelicopter):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.helicopter_group,
-                         SpriteGroups.left_helicopter_group)
+                         SpriteGroups.left_helicopter_group,
+                         SpriteGroups.enemy_aviation_group)
         self.rect.x = -self.rect.w
 
 
@@ -108,7 +124,8 @@ class HelicopterRight(_AbstractHelicopter):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.helicopter_group,
-                         SpriteGroups.right_helicopter_group)
+                         SpriteGroups.right_helicopter_group,
+                         SpriteGroups.enemy_aviation_group)
         self.rect.x = width
 
 
@@ -122,16 +139,24 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def __init__(self, *groups):
         super().__init__(*groups)
+        list_of_booms = []
+        for i in range(1, 11):
+            list_of_booms.append(load_image(f'images/aviation_explosion/enemy_explosion_{i}.png'))
+        self.boom_images = itertools.cycle(tuple(list_of_booms))
         self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
         self.image = self.first_image
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.y = self.height
+        self.explosion_step = 0
+        self.is_destroyed = False
 
     def update(self, *args, **kwargs):
-        pass
         if not args:
-            self.animation()
+            if self.is_destroyed:
+                self.animate_destruction()
+            else:
+                self.animation()
 
     def animation(self):
         self.image = next(self.image_cycle)
@@ -144,10 +169,16 @@ class _AbstractJet(pygame.sprite.Sprite):
             self.kill()
 
     def destroy(self):
-        """Уничтожение самолета
-        В данном методе нужно будет реализовать убийство спрайта,
-        появление анимации взрыва, звуковое сопровождение (возможно)"""
-        # Потом переписать/удалить это ^^^^
+        self.is_destroyed = True
+        self.explosion_step = 0
+        self.image = next(self.boom_images)
+
+    def animate_destruction(self):
+        if self.explosion_step <= 8:
+            self.image = next(self.boom_images)
+            self.explosion_step += 1
+        else:
+            self.kill()
 
 
 class JetLeft(_AbstractJet):
@@ -155,13 +186,15 @@ class JetLeft(_AbstractJet):
     second_image = load_image('images/aviation/jet_left_2.png')
     third_image = load_image('images/aviation/jet_left_3.png')
 
+    height = 50
     jet_velocity = _flying_velocity
 
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.jet_group,
-                         SpriteGroups.left_jet_group)
+                         SpriteGroups.left_jet_group,
+                         SpriteGroups.enemy_aviation_group)
         self.rect.x = -self.rect.w
 
 
@@ -176,7 +209,8 @@ class JetRight(_AbstractJet):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.jet_group,
-                         SpriteGroups.right_jet_group)
+                         SpriteGroups.right_jet_group,
+                         SpriteGroups.enemy_aviation_group)
         self.rect.x = width
 
 
@@ -375,34 +409,26 @@ class Bullet(pygame.sprite.Sprite):
     def __init__(self, bullet_spawn_point):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.bullet_group)
-        list_of_booms = []
-        for i in range(1, 11):
-            list_of_booms.append(load_image(f'images/aviation_explosion/enemy_explosion_{i}.png'))
-        self.boom_images = itertools.cycle(tuple(list_of_booms))
         self.bullet_spawn_point = bullet_spawn_point
         self.image = self.parachute_image
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = self.bullet_spawn_point[0] + 360
         self.rect.y = self.bullet_spawn_point[1] + 460
-        self.count = 0
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.count != 0:
-                self.image = next(self.boom_images)
-                self.count += 1
-                if self.count == 10:
-                    self.kill()
             if self.rect.y <= 0:
                 self.kill()
-            elif self.count == 0:
+            else:
                 self.move()
-            collided_jets = pygame.sprite.spritecollide(self, SpriteGroups.jet_group, False, pygame.sprite.collide_mask)
+            collided_jets = pygame.sprite.spritecollide(self, SpriteGroups.enemy_aviation_group, False,
+                                                        pygame.sprite.collide_mask)
             if collided_jets:
                 for jet in collided_jets:
-                    jet.kill()
-                    self.count = 1
+                    if not jet.is_destroyed:
+                        jet.destroy()
+                        self.kill()
 
     def move(self):
         self.rect.x -= (39 - self.bullet_spawn_point[0]) // 5
