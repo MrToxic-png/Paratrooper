@@ -391,6 +391,8 @@ class Gun(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.gun_group)
+        self.is_alive = True
+        self.is_first = True
         self.is_moving = 0
         self.angle = 270
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
@@ -398,14 +400,12 @@ class Gun(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = 360, 460
 
     def draw(self):
-        white_color = (255, 255, 255)
         blue_color = (85, 255, 255)
         pink_color = (255, 84, 255)
         self.end_gun_point = tuple(map(round, (self.gun_length * cos(radians(self.angle)) + self.center_x,
                                                self.gun_length * sin(radians(self.angle)) + self.center_y)))
 
         self.image.fill((0, 0, 0))
-        pygame.draw.rect(self.image, white_color, (self.white_rect_x, self.white_rect_y, 80, 60))
         # pygame.draw.aaline(self.image, (85, 255, 255), (self.center_x, self.center_y), end_gun_point)
         pygame.draw.line(self.image, blue_color, (self.center_x, self.center_y), self.end_gun_point, width=8)
 
@@ -413,8 +413,12 @@ class Gun(pygame.sprite.Sprite):
         pygame.draw.ellipse(self.image, pink_color, (self.pink_part_x, self.rect_part_pink_y - 15, 25, 25))
         pygame.draw.rect(self.image, blue_color, (self.center_x - 3, self.center_y - 3, 6, 6))
 
+    def draw_base(self):
+        white_color = (255, 255, 255)
+        pygame.draw.rect(self.image, white_color, (self.white_rect_x, self.white_rect_y, 80, 60))
+
     def update(self, *args, **kwargs):
-        if args and args[0].type == pygame.KEYDOWN:
+        if args and args[0].type == pygame.KEYDOWN and self.is_alive:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_RIGHT]:
                 self.is_moving = 1
@@ -423,6 +427,8 @@ class Gun(pygame.sprite.Sprite):
             if keys[pygame.K_UP]:
                 self.is_moving = 0
                 Bullet(self.end_gun_point)
+            if keys[pygame.K_w]:
+                self.is_alive = False
 
         if not args:
             self.angle += 5 * self.is_moving
@@ -432,12 +438,19 @@ class Gun(pygame.sprite.Sprite):
             if self.is_moving == -1 and self.angle <= self.left_angle:
                 self.is_moving = 0
                 self.angle = self.left_angle
-            self.draw()
+            if self.is_alive:
+                self.draw()
+            elif self.is_first:
+                self.is_first = False
+                self.destroy()
+            self.draw_base()
         self.angle %= 360
 
     def destroy(self):
         """У пушки тоже должна быть анимация уничтожения с вызовом класса Explode"""
-
+        explode_x, explode_y = self.pink_part_x + 340, self.rect_part_pink_y + 440
+        self.image.fill((0, 0, 0))
+        Explode(explode_x, explode_y)
 
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
