@@ -4,6 +4,7 @@ from math import cos, radians, sin
 
 import pygame
 
+import CustomEvents
 from init_pygame import width, fps, main_screen
 
 
@@ -46,7 +47,7 @@ class SpriteGroups:
 
 
 _flying_velocity = 180
-_g_const = 200
+_g_const = 210
 
 
 class _AbstractHelicopter(pygame.sprite.Sprite):
@@ -238,10 +239,14 @@ class _AbstractBomb(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение бомбы"""
+        explode_x, explode_y = self.rect.x, self.rect.y
+        self.kill()
+        BombExplode(explode_x, explode_y)
 
 
 class Bomb(_AbstractBomb):
     """Спрайт бомбы, сбрасываемой самолетом"""
+
     def __init__(self, way: str, x: int, y: int):
         super().__init__()
 
@@ -263,6 +268,9 @@ class Paratrooper(pygame.sprite.Sprite):
 
     height = 30
 
+    no_parachute_speed = 150
+    with_parachute_speed = 90
+
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
@@ -273,11 +281,9 @@ class Paratrooper(pygame.sprite.Sprite):
         self.rect.x = 10
         self.rect.y = self.height
         self.is_moving = True
-
-        self.no_parachute_speed = 120
-        self.with_parachute_speed = 60
-
+        self.falling_velocity = self.no_parachute_speed
         self.parachute = None
+        self.parachute_used = False
 
     def update(self, *args, **kwargs):
         if not args:
@@ -291,25 +297,50 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def move(self):
         """Падение парашютиста"""
-        if self.parachute is not None:
-            if pygame.sprite.spritecollideany(self, SpriteGroups.ground_group):
-                self.parachute.kill()
-                self.parachute = None
-                self.is_moving = False
+        if pygame.sprite.spritecollideany(self, SpriteGroups.ground_group):
+            self.is_moving = False
+            if self.parachute is not None:
+                self.kill_parachute()
             else:
-                displacement = self.with_parachute_speed // fps
-                self.rect.y += displacement
-                self.parachute.move()
-        elif self.is_moving:
-            displacement = self.no_parachute_speed // fps
+                # Дорабатываем логику свободного падения
+                pass
+
+        if self.is_moving:
+            displacement = self.falling_velocity // fps
             self.rect.y += displacement
-            if self.rect.y >= 375:
-                self.parachute = Parachute(self)
+            if self.rect.y >= 375 and not self.parachute_used:
+                self.open_parachute()
+                self.set_parachute_speed()
+            if self.parachute:
+                self.parachute.move()
             # ^ Заметка: Высота раскрытия парашюта не фиксированное число, дальше решим, как сделаем
 
     def destroy(self):
         """Уничтожение парашютиста"""
-        pass
+        self.kill_parachute()
+        explode_x, explode_y = self.rect.x, self.rect.y
+        self.kill()
+        Explode(explode_x, explode_y)
+
+    def open_parachute(self):
+        """Раскрытие парашюта"""
+        if self.parachute_used:
+            return
+
+        assert self.parachute is None
+        self.parachute = Parachute(self)
+        self.parachute_used = True
+
+    def kill_parachute(self):
+        """Убирает спрайт парашюта"""
+        self.parachute.kill()
+        self.parachute = None
+
+    def set_no_parachute_speed(self):
+        self.falling_velocity = self.no_parachute_speed
+
+    def set_parachute_speed(self):
+        self.falling_velocity = self.with_parachute_speed
 
 
 class Parachute(pygame.sprite.Sprite):
@@ -324,7 +355,7 @@ class Parachute(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = host.rect.x - self.rect.w // 2 + host.rect.w // 2
         self.rect.y = host.rect.y - 30
-        self.speed = 60
+        self.speed = 90
 
         self.host = host
 
@@ -339,7 +370,8 @@ class Parachute(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение парашюта"""
-        pass
+        self.host.kill_parachute()
+        self.host.set_no_parachute_speed()
 
 
 class Gun(pygame.sprite.Sprite):
@@ -389,7 +421,7 @@ class Gun(pygame.sprite.Sprite):
                 Bullet(self.end_gun_point)
 
         if not args:
-            self.angle += 3 * self.is_moving
+            self.angle += 5 * self.is_moving
             if self.is_moving == 1 and self.angle >= self.right_angle:
                 self.is_moving = 0
                 self.angle = self.right_angle
@@ -469,20 +501,33 @@ class Explode(pygame.sprite.Sprite):
     def update(self, *args, **kwargs):
         if args:
             event = args[0]
-            # Здесь должна быть обработка кастомного события: Оно будет происходить с каким-то таймингом,
-            # чтобы анимация не была слишком быстрой
-
-            # Типа вот такого vvvvv
-            # if event.type == CustomEvent:
-            #     try:
-            #         self.image = next(self.image_iter)
-            #     except StopIteration:
-            #         self.kill()
-            pass
+            if event.type == CustomEvents.UPDATE_ANIMATION:
+                try:
+                    self.image = next(self.image_iter)
+                except StopIteration:
+                    self.kill()
 
 
 class BombExplode(pygame.sprite.Sprite):
     """Спрайт с анимацией взрыва бомбы"""
+    explode_images = tuple(map(lambda number: load_image(f'images/bomb_explosion/explode_{number}.png'),
+                               range(1, 10)))
+
+    def __init__(self, x: int, y: int):
+        super().__init__(SpriteGroups.main_group, SpriteGroups.explode_group)
+        self.image_iter = iter(self.explode_images)
+        self.image = next(self.image_iter)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+
+    def update(self, *args, **kwargs):
+        if args:
+            event = args[0]
+            if event.type == CustomEvents.UPDATE_ANIMATION:
+                try:
+                    self.image = next(self.image_iter)
+                except StopIteration:
+                    self.kill()
 
 
 class FallDeath(pygame.sprite.Sprite):

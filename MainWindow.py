@@ -2,7 +2,7 @@ import sys
 
 import pygame
 
-from Sprites import JetRight, JetLeft, Paratrooper, SpriteGroups, HelicopterLeft
+from Sprites import JetRight, Paratrooper, SpriteGroups, HelicopterLeft
 from init_pygame import width, height, fps, main_screen
 
 
