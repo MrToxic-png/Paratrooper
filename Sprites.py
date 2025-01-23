@@ -278,7 +278,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.image_cycle = itertools.cycle(tuple(self.list_of_divs))
         self.image = self.paratrooper_image
         self.rect = self.image.get_rect()
-        self.rect.x = 10
+        self.rect.x = 200
         self.rect.y = self.height
         self.is_moving = True
         self.falling_velocity = self.no_parachute_speed
@@ -289,7 +289,7 @@ class Paratrooper(pygame.sprite.Sprite):
         if not args:
             if self.rect.y >= 580:
                 self.animation()
-            else:
+            elif self.is_moving:
                 self.move()
 
     def animation(self):
@@ -302,8 +302,7 @@ class Paratrooper(pygame.sprite.Sprite):
             if self.parachute is not None:
                 self.kill_parachute()
             else:
-                # Дорабатываем логику свободного падения
-                pass
+                self.die()
 
         if self.is_moving:
             displacement = self.falling_velocity // fps
@@ -321,6 +320,11 @@ class Paratrooper(pygame.sprite.Sprite):
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
         Explode(explode_x, explode_y)
+
+    def die(self):
+        dead_x, dead_y = self.rect.x, self.rect.y
+        self.kill()
+        FallDeath(dead_x, dead_y)
 
     def open_parachute(self):
         """Раскрытие парашюта"""
@@ -533,6 +537,24 @@ class BombExplode(pygame.sprite.Sprite):
 class FallDeath(pygame.sprite.Sprite):
     """Спрайт с анимацией смерти от падения
     реализация должна быть примерно похожа на Explode"""
+    death_images = tuple(map(lambda number: load_image(f'images/die_animation/skull_{number}.png'),
+                               range(1, 4)))
+
+    def __init__(self, x: int, y: int):
+        super().__init__(SpriteGroups.main_group, SpriteGroups.explode_group)
+        self.image_iter = iter(self.death_images)
+        self.image = next(self.image_iter)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x - 13, y - 30
+
+    def update(self, *args, **kwargs):
+        if args:
+            event = args[0]
+            if event.type == CustomEvents.UPDATE_ANIMATION:
+                try:
+                    self.image = next(self.image_iter)
+                except StopIteration:
+                    self.kill()
 
 
 # Данные спрайты существуют в единственном экземпляре с начала игры, поэтому их можно сразу инициализировать
