@@ -337,8 +337,9 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def kill_parachute(self):
         """Убирает спрайт парашюта"""
-        self.parachute.kill()
-        self.parachute = None
+        if self.parachute:
+            self.parachute.kill()
+            self.parachute = None
 
     def set_no_parachute_speed(self):
         self.falling_velocity = self.no_parachute_speed
@@ -385,6 +386,8 @@ class Gun(pygame.sprite.Sprite):
     right_angle = 350
     center_x, center_y = 39, 33
     gun_length = 35
+    pink_part_x = 27
+    rect_part_pink_y = 35
 
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
@@ -444,6 +447,7 @@ class Gun(pygame.sprite.Sprite):
         """Обновление координат крайней точки"""
         self.end_gun_point = tuple(map(round, (self.gun_length * cos(radians(self.angle)) + self.center_x,
                                                self.gun_length * sin(radians(self.angle)) + self.center_y)))
+
 
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
@@ -544,7 +548,7 @@ class FallDeath(pygame.sprite.Sprite):
     """Спрайт с анимацией смерти от падения
     реализация должна быть примерно похожа на Explode"""
     death_images = tuple(map(lambda number: load_image(f'images/die_animation/skull_{number}.png'),
-                               range(1, 4)))
+                             range(1, 4)))
 
     def __init__(self, x: int, y: int):
         super().__init__(SpriteGroups.main_group, SpriteGroups.explode_group)
