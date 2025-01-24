@@ -380,13 +380,11 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
+    static_gun_part = load_image('images/gun/static_part.png')
     left_angle = 190
     right_angle = 350
     center_x, center_y = 39, 33
     gun_length = 35
-    white_rect_x, white_rect_y = 0, 55
-    pink_part_x = 27
-    rect_part_pink_y = 35
 
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
@@ -398,27 +396,17 @@ class Gun(pygame.sprite.Sprite):
         self.image = pygame.Surface((80, 115), pygame.SRCALPHA, 32)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = 360, 460
-
-    def draw(self):
-        blue_color = (85, 255, 255)
-        pink_color = (255, 84, 255)
         self.end_gun_point = tuple(map(round, (self.gun_length * cos(radians(self.angle)) + self.center_x,
                                                self.gun_length * sin(radians(self.angle)) + self.center_y)))
 
+    def draw(self):
+        blue_color = (85, 255, 255)
         self.image.fill((0, 0, 0))
-        # pygame.draw.aaline(self.image, (85, 255, 255), (self.center_x, self.center_y), end_gun_point)
         pygame.draw.line(self.image, blue_color, (self.center_x, self.center_y), self.end_gun_point, width=8)
-
-        pygame.draw.rect(self.image, pink_color, (self.pink_part_x, self.rect_part_pink_y, 25, 20))
-        pygame.draw.ellipse(self.image, pink_color, (self.pink_part_x, self.rect_part_pink_y - 15, 25, 25))
-        pygame.draw.rect(self.image, blue_color, (self.center_x - 3, self.center_y - 3, 6, 6))
-
-    def draw_base(self):
-        white_color = (255, 255, 255)
-        pygame.draw.rect(self.image, white_color, (self.white_rect_x, self.white_rect_y, 80, 60))
+        self.image.blit(self.static_gun_part, (0, 0))
 
     def update(self, *args, **kwargs):
-        if args and args[0].type == pygame.KEYDOWN and self.is_alive:
+        if args and args[0].type == pygame.KEYDOWN:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_RIGHT]:
                 self.is_moving = 1
@@ -439,11 +427,11 @@ class Gun(pygame.sprite.Sprite):
                 self.is_moving = 0
                 self.angle = self.left_angle
             if self.is_alive:
+                self.update_end_gun_point()
                 self.draw()
             elif self.is_first:
                 self.is_first = False
                 self.destroy()
-            self.draw_base()
         self.angle %= 360
 
     def destroy(self):
@@ -451,6 +439,11 @@ class Gun(pygame.sprite.Sprite):
         explode_x, explode_y = self.pink_part_x + 340, self.rect_part_pink_y + 440
         self.image.fill((0, 0, 0))
         Explode(explode_x, explode_y)
+
+    def update_end_gun_point(self):
+        """Обновление координат крайней точки"""
+        self.end_gun_point = tuple(map(round, (self.gun_length * cos(radians(self.angle)) + self.center_x,
+                                               self.gun_length * sin(radians(self.angle)) + self.center_y)))
 
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
