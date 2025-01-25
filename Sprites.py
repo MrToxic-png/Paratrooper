@@ -27,7 +27,6 @@ class SpriteGroups:
     main_group = pygame.sprite.Group()
 
     enemies_group = pygame.sprite.Group()
-    enemy_aviation_group = pygame.sprite.Group()
     helicopter_group = pygame.sprite.Group()
     left_helicopter_group = pygame.sprite.Group()
     right_helicopter_group = pygame.sprite.Group()
@@ -68,13 +67,16 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         self.is_destroyed = False
 
     def update(self, *args, **kwargs):
+        if args:
+            event = args[0]
+            if event.type == CustomEvents.UPDATE_ANIMATION:
+                self.animation()
         if not args:
-            self.animation()
+            self.move()
 
     def animation(self):
         """Анимация движения вертолета"""
         self.image = next(self.image_cycle)
-        self.move()
 
     def move(self):
         """Передвижение вертолета"""
@@ -105,8 +107,7 @@ class HelicopterLeft(_AbstractHelicopter):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.helicopter_group,
-                         SpriteGroups.left_helicopter_group,
-                         SpriteGroups.enemy_aviation_group)
+                         SpriteGroups.left_helicopter_group)
         self.rect.x = -self.rect.w
 
 
@@ -122,8 +123,7 @@ class HelicopterRight(_AbstractHelicopter):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.helicopter_group,
-                         SpriteGroups.right_helicopter_group,
-                         SpriteGroups.enemy_aviation_group)
+                         SpriteGroups.right_helicopter_group)
         self.rect.x = width
 
 
@@ -146,13 +146,16 @@ class _AbstractJet(pygame.sprite.Sprite):
         self.is_destroyed = False
 
     def update(self, *args, **kwargs):
+        if args:
+            event = args[0]
+            if event.type == CustomEvents.UPDATE_ANIMATION:
+                self.animation()
         if not args:
-            self.animation()
+            self.move()
 
     def animation(self):
         """Анимация движения самолета"""
         self.image = next(self.image_cycle)
-        self.move()
 
     def move(self):
         """Передвижение самолета"""
@@ -183,8 +186,7 @@ class JetLeft(_AbstractJet):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.jet_group,
-                         SpriteGroups.left_jet_group,
-                         SpriteGroups.enemy_aviation_group)
+                         SpriteGroups.left_jet_group)
         self.rect.x = -self.rect.w
 
 
@@ -199,8 +201,7 @@ class JetRight(_AbstractJet):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.jet_group,
-                         SpriteGroups.right_jet_group,
-                         SpriteGroups.enemy_aviation_group)
+                         SpriteGroups.right_jet_group)
         self.rect.x = width
 
 
@@ -389,6 +390,8 @@ class Gun(pygame.sprite.Sprite):
     pink_part_x = 27
     rect_part_pink_y = 35
 
+    angle_velocity = 150
+
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.gun_group)
@@ -409,20 +412,21 @@ class Gun(pygame.sprite.Sprite):
         self.image.blit(self.static_gun_part, (0, 0))
 
     def update(self, *args, **kwargs):
-        if args and args[0].type == pygame.KEYDOWN:
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_RIGHT]:
-                self.is_moving = 1
-            if keys[pygame.K_LEFT]:
-                self.is_moving = -1
-            if keys[pygame.K_UP]:
-                self.is_moving = 0
-                Bullet(self.end_gun_point)
-            if keys[pygame.K_w]:
-                self.is_alive = False
+        if args:
+            event = args[0]
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    self.is_moving = 1
+                if event.key == pygame.K_LEFT:
+                    self.is_moving = -1
+                if event.key == pygame.K_UP:
+                    self.is_moving = 0
+                    Bullet(*self.end_gun_point, self.angle)
+                if event.key == pygame.K_w:
+                    self.is_alive = False
 
         if not args:
-            self.angle += 5 * self.is_moving
+            self.angle += (self.angle_velocity / fps) * self.is_moving
             if self.is_moving == 1 and self.angle >= self.right_angle:
                 self.is_moving = 0
                 self.angle = self.right_angle
@@ -452,18 +456,17 @@ class Gun(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
     parachute_image = load_image('images/bullet.png')
+    bullet_velocity = 300
 
-    height = 600
-
-    def __init__(self, bullet_spawn_point):
+    def __init__(self, bullet_spawn_x: int, bullet_spawn_y: int, angle: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.bullet_group)
-        self.bullet_spawn_point = bullet_spawn_point
         self.image = self.parachute_image
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-        self.rect.x = self.bullet_spawn_point[0] + 360
-        self.rect.y = self.bullet_spawn_point[1] + 460
+        self.rect.x = bullet_spawn_x + 360
+        self.rect.y = bullet_spawn_y + 460
+        self.angle = angle
 
     def update(self, *args, **kwargs):
         if not args:
@@ -480,11 +483,10 @@ class Bullet(pygame.sprite.Sprite):
                 self.kill()
 
     def move(self):
-        self.rect.x -= (39 - self.bullet_spawn_point[0]) // 5
-        self.rect.y -= (33 - self.bullet_spawn_point[1]) // 5
-
-        # Тоже следует переделать через displacement, можешь попробовать поебаться с kx + b (к Сане)
-        # Потом удалить это ^^^^
+        displacement_x = self.bullet_velocity * cos(radians(self.angle)) / fps
+        displacement_y = self.bullet_velocity * sin(radians(self.angle)) / fps
+        self.rect.x += displacement_x
+        self.rect.y += displacement_y
 
 
 class Ground(pygame.sprite.Sprite):
@@ -565,6 +567,10 @@ class FallDeath(pygame.sprite.Sprite):
                     self.image = next(self.image_iter)
                 except StopIteration:
                     self.kill()
+
+
+class ParatroopersState:
+    """Класс, хранящий и управляющий информацией о парашютистах"""
 
 
 # Данные спрайты существуют в единственном экземпляре с начала игры, поэтому их можно сразу инициализировать
