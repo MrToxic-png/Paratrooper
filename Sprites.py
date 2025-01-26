@@ -1,6 +1,7 @@
 import itertools
 import os
 from math import cos, radians, sin
+from random import randint
 
 import pygame
 
@@ -65,6 +66,8 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         self.rect.y = self.height
         self.explosion_step = 0
         self.is_destroyed = False
+        self.paratrooper = None
+        self.paratrooper_dropped = False
 
     def update(self, *args, **kwargs):
         if args:
@@ -91,8 +94,16 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         self.kill()
         Explode(explode_x, explode_y)
 
+
+
     def drop_paratrooper(self):
         """Сброс парашютиста"""
+        if self.paratrooper_dropped:
+            return
+
+        assert self.paratrooper is None
+        self.paratrooper = Paratrooper(self)
+        self.paratrooper_dropped = True
 
 
 class HelicopterLeft(_AbstractHelicopter):
@@ -267,20 +278,20 @@ class Paratrooper(pygame.sprite.Sprite):
     for i in range(1, 3):
         list_of_divs.append('images/divs/div_' + str(i) + '.png')
 
-    height = 30
-
     no_parachute_speed = 150
     with_parachute_speed = 90
 
-    def __init__(self):
+    open_parachute_y = randint(325, 375)
+
+    def __init__(self, host: _AbstractHelicopter):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.paratrooper_group)
         self.image_cycle = itertools.cycle(tuple(self.list_of_divs))
         self.image = self.paratrooper_image
         self.rect = self.image.get_rect()
-        self.rect.x = 200
-        self.rect.y = self.height
+        self.rect.x = host.rect.x
+        self.rect.y = host.rect.y
         self.is_moving = True
         self.falling_velocity = self.no_parachute_speed
         self.parachute = None
@@ -308,7 +319,7 @@ class Paratrooper(pygame.sprite.Sprite):
         if self.is_moving:
             displacement = self.falling_velocity // fps
             self.rect.y += displacement
-            if self.rect.y >= 375 and not self.parachute_used:
+            if self.rect.y >= self.open_parachute_y and not self.parachute_used:
                 self.open_parachute()
                 self.set_parachute_speed()
             if self.parachute:

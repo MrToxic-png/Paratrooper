@@ -36,7 +36,6 @@ class MainWindow:
 
         JetRight()
         HelicopterLeft()
-        Paratrooper()
 
         while True:
             main_screen.fill((0, 0, 0))
