@@ -66,8 +66,6 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         self.rect.y = self.height
         self.explosion_step = 0
         self.is_destroyed = False
-        self.paratrooper = None
-        self.paratrooper_dropped = False
 
     def update(self, *args, **kwargs):
         if args:
@@ -94,16 +92,9 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         self.kill()
         Explode(explode_x, explode_y)
 
-
-
     def drop_paratrooper(self):
         """Сброс парашютиста"""
-        if self.paratrooper_dropped:
-            return
-
-        assert self.paratrooper is None
-        self.paratrooper = Paratrooper(self)
-        self.paratrooper_dropped = True
+        Paratrooper(ParatroopersState.get_nearest_column(self.rect.x))
 
 
 class HelicopterLeft(_AbstractHelicopter):
@@ -283,19 +274,31 @@ class Paratrooper(pygame.sprite.Sprite):
 
     open_parachute_y = randint(325, 375)
 
-    def __init__(self, host: _AbstractHelicopter):
+    def __init__(self, column: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.paratrooper_group)
         self.image_cycle = itertools.cycle(tuple(self.list_of_divs))
         self.image = self.paratrooper_image
+        self._column = column
         self.rect = self.image.get_rect()
-        self.rect.x = host.rect.x
-        self.rect.y = host.rect.y
+        self.rect.x = paratroopers_state.get_column_x(column)
+        self.rect.y = 10
         self.is_moving = True
         self.falling_velocity = self.no_parachute_speed
         self.parachute = None
         self.parachute_used = False
+
+        paratroopers_state.update()
+
+    @property
+    def in_air(self):
+        """Возвращает булево значение: находится ли парашютист в воздухе"""
+        return self.is_moving
+
+    @property
+    def column(self):
+        return self._column
 
     def update(self, *args, **kwargs):
         if not args:
@@ -315,6 +318,7 @@ class Paratrooper(pygame.sprite.Sprite):
                 self.kill_parachute()
             else:
                 self.die()
+            paratroopers_state.update()
 
         if self.is_moving:
             displacement = self.falling_velocity // fps
@@ -583,7 +587,119 @@ class FallDeath(pygame.sprite.Sprite):
 class ParatroopersState:
     """Класс, хранящий и управляющий информацией о парашютистах"""
 
+    # Координаты x, по которым будут выравниваться парашютисты
+    _left_side_cords_x = [45, 81, 117, 153, 189, 225, 261, 297, 333]  # Слева от пушки
+    _right_side_cords_x = [465, 501, 537, 573, 609, 645, 681, 717, 753]  # Справа от пушки
+    columns_cords = _left_side_cords_x + _right_side_cords_x
+
+    def __init__(self):
+        self.left_on_ground_count = 0
+        self.right_on_ground_count = 0
+        self.paratrooper_columns = [[] for _ in range(18)]
+        self._dropping_allowed = True
+
+    @property
+    def dropping_allowed(self):
+        """Возвращает булево значение: можно ли еще сбрасывать парашютиста или нет"""
+        return self._dropping_allowed
+
+    @classmethod
+    def get_column_x(cls, column: int):
+        """Возвращает координату x для определенного столбца"""
+        return cls.columns_cords[column]
+
+    @classmethod
+    def get_nearest_column(cls, x: int):
+        """Возвращает ближайший столбец для данного x"""
+        return cls.columns_cords.index(min(cls.columns_cords, key=lambda column_x: abs(x - column_x)))
+
+    def update(self):
+        """Полностью обновляет информацию о парашютистах"""
+        for column in self.paratrooper_columns:
+            column.clear()
+        self.left_on_ground_count = 0
+        self.right_on_ground_count = 0
+
+        for paratrooper in SpriteGroups.paratrooper_group.sprites():
+            paratrooper: Paratrooper
+            self._add_paratrooper(paratrooper)
+            if not paratrooper.in_air:
+                if paratrooper.column < 9:
+                    self.left_on_ground_count += 1
+                else:
+                    self.right_on_ground_count += 1
+
+        if self.left_on_ground_count >= 4 or self.right_on_ground_count >= 4:
+            self._stop_dropping()
+        else:
+            self._continue_dropping()
+
+        for column in self.paratrooper_columns:
+            column.sort(key=lambda paratrooper: paratrooper.rect.y, reverse=True)
+
+    def get_blowing_group(self) -> list[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
+        """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
+        Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
+        if self.left_on_ground_count < 4 and self.right_on_ground_count < 4:
+            return None
+
+        blowing_group = []
+        paratrooper_columns_copy = list(map(list.copy, self.paratrooper_columns))
+
+        if self.left_on_ground_count >= 4:
+            left_columns = paratrooper_columns_copy[:9]
+            while True:
+                leftest_column = left_columns.pop()
+                while leftest_column:
+                    paratrooper = leftest_column.pop()
+                    blowing_group.append(paratrooper)
+                    if len(blowing_group) == 4:
+                        return blowing_group
+
+        if self.right_on_ground_count >= 4:
+            # Список переворачивается для эффективного извлечения через pop
+            right_columns = paratrooper_columns_copy[9::-1]
+            while True:
+                leftest_column = right_columns.pop()
+                while leftest_column:
+                    paratrooper = leftest_column.pop()
+                    blowing_group.append(paratrooper)
+                    if len(blowing_group) == 4:
+                        return blowing_group
+
+    def kill_column(self, column: int):
+        """Уничтожает всех парашютистов на земле на определенном столбце
+        (Должно вызываться тогда, когда парашютист приземляется без парашюта)"""
+        for paratrooper in self.paratrooper_columns[column]:
+            paratrooper.kill()
+        # Здесь также будет вызов FallDeath спрайта
+
+    def player_lost(self):
+        """Возвращает булево значение, проигрывает ли игрок:
+        Игрок уже заведомо проигрывает, если на одной из сторон находится не менее 4 приземленных парашютистов
+        (то есть сброс парашютистов остановлен), и при этом в воздухе не находится ни одного парашютиста"""
+        return not self._any_paratrooper_in_air() and not self.dropping_allowed
+
+    def _add_paratrooper(self, paratrooper: Paratrooper):
+        """Добавляет парашютиста в определенный столбец"""
+        self.paratrooper_columns[paratrooper.column].append(paratrooper)
+
+    def _stop_dropping(self):
+        """Остановить сброс парашютистов"""
+        self._dropping_allowed = False
+
+    def _continue_dropping(self):
+        """Возобновить сброс парашютистов"""
+        self._dropping_allowed = True
+
+    def _any_paratrooper_in_air(self):
+        """Возвращает булево значение: находится ли хотя бы один из парашютистов в воздухе"""
+        return any(map(lambda column: any(map(lambda paratrooper: paratrooper.in_air, column)),
+                       self.paratrooper_columns))
+
 
 # Данные спрайты существуют в единственном экземпляре с начала игры, поэтому их можно сразу инициализировать
 gun = Gun()
 ground = Ground()
+
+paratroopers_state = ParatroopersState()
