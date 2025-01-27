@@ -2,7 +2,7 @@ import sys
 
 import pygame
 
-from Sprites import JetRight, Paratrooper, SpriteGroups
+from Sprites import SpriteGroups
 from Wave import EnemyWave
 from init_pygame import width, height, fps, main_screen
 
