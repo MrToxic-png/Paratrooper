@@ -2,7 +2,8 @@ import sys
 
 import pygame
 
-from Sprites import JetRight, Paratrooper, SpriteGroups, HelicopterLeft
+from Sprites import JetRight, Paratrooper, SpriteGroups
+from Wave import EnemyWave
 from init_pygame import width, height, fps, main_screen
 
 
@@ -34,16 +35,17 @@ class MainWindow:
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((width, height))
 
-        JetRight()
-        HelicopterLeft()
+        wave = EnemyWave(4, 3)
 
         while True:
             main_screen.fill((0, 0, 0))
             for event in pygame.event.get():
                 SpriteGroups.main_group.update(event)
+                wave.update(event)
                 if event.type == pygame.QUIT:
                     self.terminate()
             SpriteGroups.main_group.update()
+            wave.update()
             SpriteGroups.main_group.draw(screen)
             pygame.display.flip()
             clock.tick(fps)

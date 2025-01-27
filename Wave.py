@@ -7,7 +7,7 @@
 from random import randint
 
 import CustomEvents
-from Sprites import HelicopterLeft, HelicopterRight
+from Sprites import HelicopterLeft, HelicopterRight, SpriteGroups, JetLeft, JetRight
 
 
 class EnemyWave:
@@ -25,7 +25,7 @@ class EnemyWave:
     def update(self, *args, **kwargs):
         if self.mini_waves == 0:
             if self.next_waves != 0:
-                EnemyWave(self.next_waves)
+                return EnemyWave(self.next_waves)
         if args:
             event = args[0]
             if event.type == CustomEvents.SPAWN_NEW_AVIATION:
@@ -36,15 +36,14 @@ class EnemyWave:
                     if self.helicopter_count > self.max_helicopters:
                         self.jet_or_helicopter = False
                         self.helicopter_count = 0
+                        self.mini_waves -= 1
                     if self.jet_count <= self.max_jet:
                         self.spawn_jet()
                         self.jet_count += 1
                     else:
                         self.jet_or_helicopter = True
                         self.jet_count = 0
-
-
-
+                        self.mini_waves -= 1
 
     def spawn_helicopter(self):
         if randint(0, 1) == 0:
@@ -54,6 +53,6 @@ class EnemyWave:
 
     def spawn_jet(self):
         if randint(0, 1) == 0:
-            HelicopterLeft()
+            JetLeft()
         else:
-            HelicopterRight()
+            JetRight()
