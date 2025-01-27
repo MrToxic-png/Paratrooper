@@ -15,7 +15,7 @@ class EnemyWave:
     max_helicopters = randint(8, 10)
     max_jet = randint(3, 5)
 
-    def __init__(self, mini_waves, next_waves=0):
+    def __init__(self, mini_waves, next_waves=1):
         self.mini_waves = mini_waves
         self.next_waves = next_waves
         self.helicopter_count = 0
