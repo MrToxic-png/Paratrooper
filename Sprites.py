@@ -1,5 +1,6 @@
 import itertools
 import os
+import random
 from math import cos, radians, sin
 from random import randint
 
@@ -75,6 +76,13 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         if not args:
             self.move()
 
+        column = paratroopers_state.get_nearest_column(self.rect.x)
+        drop_paratrooper_conditions = (paratroopers_state.get_diff_with_nearest_column(self.rect.x) <= 10,
+                                       not paratroopers_state.any_flying_at_column(column),
+                                       random.random() < 0.2)
+        if all(drop_paratrooper_conditions):
+            self.drop_paratrooper()
+
     def animation(self):
         """Анимация движения вертолета"""
         self.image = next(self.image_cycle)
@@ -94,7 +102,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def drop_paratrooper(self):
         """Сброс парашютиста"""
-        Paratrooper(ParatroopersState.get_nearest_column(self.rect.x))
+        Paratrooper(ParatroopersState.get_nearest_column(self.rect.x), self.rect.y + self.rect.h)
 
 
 class HelicopterLeft(_AbstractHelicopter):
@@ -274,7 +282,7 @@ class Paratrooper(pygame.sprite.Sprite):
 
     open_parachute_y = randint(325, 375)
 
-    def __init__(self, column: int):
+    def __init__(self, column: int, y: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.paratrooper_group)
@@ -283,7 +291,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self._column = column
         self.rect = self.image.get_rect()
         self.rect.x = paratroopers_state.get_column_x(column)
-        self.rect.y = 10
+        self.rect.y = y
         self.is_moving = True
         self.falling_velocity = self.no_parachute_speed
         self.parachute = None
@@ -613,6 +621,11 @@ class ParatroopersState:
         """Возвращает ближайший столбец для данного x"""
         return cls.columns_cords.index(min(cls.columns_cords, key=lambda column_x: abs(x - column_x)))
 
+    @classmethod
+    def get_diff_with_nearest_column(cls, x: int):
+        """Возвращает расстояние до ближайшего столбца"""
+        return abs(x - min(cls.columns_cords, key=lambda column_x: abs(x - column_x)))
+
     def update(self):
         """Полностью обновляет информацию о парашютистах"""
         for column in self.paratrooper_columns:
@@ -679,6 +692,10 @@ class ParatroopersState:
         Игрок уже заведомо проигрывает, если на одной из сторон находится не менее 4 приземленных парашютистов
         (то есть сброс парашютистов остановлен), и при этом в воздухе не находится ни одного парашютиста"""
         return not self._any_paratrooper_in_air() and not self.dropping_allowed
+
+    def any_flying_at_column(self, column: int):
+        """Возвращает булево значение: есть ли летящие парашютисты в столбце или нет"""
+        return any(map(lambda paratrooper: paratrooper.in_air, self.paratrooper_columns[column]))
 
     def _add_paratrooper(self, paratrooper: Paratrooper):
         """Добавляет парашютиста в определенный столбец"""
