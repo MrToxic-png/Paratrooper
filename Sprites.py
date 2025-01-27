@@ -66,8 +66,6 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         self.rect.y = self.height
         self.explosion_step = 0
         self.is_destroyed = False
-        self.paratrooper = None
-        self.paratrooper_dropped = False
 
     def update(self, *args, **kwargs):
         if args:
@@ -96,12 +94,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def drop_paratrooper(self):
         """Сброс парашютиста"""
-        if self.paratrooper_dropped:
-            return
-
-        assert self.paratrooper is None
-        self.paratrooper = Paratrooper(0)
-        self.paratrooper_dropped = True
+        Paratrooper(ParatroopersState.get_nearest_column(self.rect.x))
 
 
 class HelicopterLeft(_AbstractHelicopter):
