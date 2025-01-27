@@ -7,11 +7,10 @@
 from random import randint
 
 import CustomEvents
-from Sprites import HelicopterLeft, HelicopterRight, SpriteGroups, JetLeft, JetRight
+from Sprites import HelicopterLeft, HelicopterRight, JetLeft, JetRight
 
 
 class EnemyWave:
-
     max_helicopters = randint(8, 10)
     max_jet = randint(3, 5)
 
