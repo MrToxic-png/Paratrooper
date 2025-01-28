@@ -35,7 +35,7 @@ class MainWindow:
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((width, height))
 
-        wave = EnemyWave(4, 3)
+        wave = EnemyWave()
 
         while True:
             main_screen.fill((0, 0, 0))
