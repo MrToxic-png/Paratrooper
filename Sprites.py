@@ -2,8 +2,8 @@ import itertools
 import os
 import random
 from math import cos, radians, sin
-from random import randint
 
+import numpy
 import pygame
 
 import CustomEvents
@@ -53,20 +53,19 @@ _g_const = 210
 
 class _AbstractHelicopter(pygame.sprite.Sprite):
     """Спрайт вертолета"""
-    first_image: pygame.Surface | None = None
-    second_image: pygame.Surface | None = None
-    third_image: pygame.Surface | None = None
+    image_sequence: tuple[pygame.Surface] | None = None
     height: int | None = None
     helicopter_velocity: int | None = None
 
     def __init__(self, *groups):
         super().__init__(*groups)
-        self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
-        self.image = self.first_image
+        self.image_cycle = itertools.cycle(self.image_sequence)
+        self.image = next(self.image_cycle)
         self.rect = self.image.get_rect()
         self.rect.y = self.height
-        self.explosion_step = 0
-        self.is_destroyed = False
+
+        dropping_count = numpy.random.choice((0, 1, 2, 3), p=(0.3, 0.3, 0.3, 0.1))
+        self.dropping_columns = set(random.sample(range(paratroopers_state.column_count), dropping_count))
 
     def update(self, *args, **kwargs):
         if args:
@@ -77,11 +76,13 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
             self.move()
 
         column = paratroopers_state.get_nearest_column(self.rect.x)
-        drop_paratrooper_conditions = (paratroopers_state.get_diff_with_nearest_column(self.rect.x) <= 10,
-                                       not paratroopers_state.any_flying_at_column(column),
-                                       random.random() < 0.2)
+        drop_paratrooper_conditions = (paratroopers_state.dropping_allowed,
+                                       column in self.dropping_columns,
+                                       paratroopers_state.get_diff_with_nearest_column(self.rect.x) <= 10,
+                                       not paratroopers_state.any_flying_at_column(column))
         if all(drop_paratrooper_conditions):
             self.drop_paratrooper()
+            self.dropping_columns.remove(column)
 
     def animation(self):
         """Анимация движения вертолета"""
@@ -89,7 +90,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def move(self):
         """Передвижение вертолета"""
-        displacement = self.helicopter_velocity // fps
+        displacement = self.helicopter_velocity / fps
         self.rect.x += displacement
         if not self.rect.colliderect(main_screen.get_rect()):
             self.kill()
@@ -106,9 +107,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
 
 class HelicopterLeft(_AbstractHelicopter):
-    first_image = load_image('images/aviation/helicopter_left_1.png')
-    second_image = load_image('images/aviation/helicopter_left_2.png')
-    third_image = load_image('images/aviation/helicopter_left_3.png')
+    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
 
     height = 50
     helicopter_velocity = _flying_velocity
@@ -122,9 +121,7 @@ class HelicopterLeft(_AbstractHelicopter):
 
 
 class HelicopterRight(_AbstractHelicopter):
-    first_image = load_image('images/aviation/helicopter_right_1.png')
-    second_image = load_image('images/aviation/helicopter_right_2.png')
-    third_image = load_image('images/aviation/helicopter_right_3.png')
+    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
 
     height = 10
     helicopter_velocity = -_flying_velocity
@@ -139,21 +136,17 @@ class HelicopterRight(_AbstractHelicopter):
 
 class _AbstractJet(pygame.sprite.Sprite):
     """Спрайт реактивного самолета"""
-    first_image: pygame.Surface | None = None
-    second_image: pygame.Surface | None = None
-    third_image: pygame.Surface | None = None
+    image_sequence: tuple[pygame.Surface] | None = None
     jet_velocity: int | None = None
     height = 10
 
     def __init__(self, *groups):
         super().__init__(*groups)
-        self.image_cycle = itertools.cycle((self.first_image, self.second_image, self.third_image))
-        self.image = self.first_image
+        self.image_cycle = itertools.cycle(self.image_sequence)
+        self.image = next(self.image_cycle)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.y = self.height
-        self.explosion_step = 0
-        self.is_destroyed = False
 
     def update(self, *args, **kwargs):
         if args:
@@ -169,7 +162,7 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def move(self):
         """Передвижение самолета"""
-        displacement = self.jet_velocity // fps
+        displacement = self.jet_velocity / fps
         self.rect.x += displacement
         if not self.rect.colliderect(main_screen.get_rect()):
             self.kill()
@@ -185,11 +178,7 @@ class _AbstractJet(pygame.sprite.Sprite):
 
 
 class JetLeft(_AbstractJet):
-    first_image = load_image('images/aviation/jet_left_1.png')
-    second_image = load_image('images/aviation/jet_left_2.png')
-    third_image = load_image('images/aviation/jet_left_3.png')
-
-    height = 50
+    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/jet_left_{number}.png'), (1, 2, 3)))
     jet_velocity = _flying_velocity
 
     def __init__(self):
@@ -201,10 +190,7 @@ class JetLeft(_AbstractJet):
 
 
 class JetRight(_AbstractJet):
-    first_image = load_image('images/aviation/jet_right_1.png')
-    second_image = load_image('images/aviation/jet_right_2.png')
-    third_image = load_image('images/aviation/jet_right_3.png')
-
+    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/jet_right_{number}.png'), (1, 2, 3)))
     jet_velocity = -_flying_velocity
 
     def __init__(self):
@@ -273,20 +259,16 @@ class Bomb(_AbstractBomb):
 class Paratrooper(pygame.sprite.Sprite):
     """Спрайт парашютиста"""
     paratrooper_image = load_image('images/trooper.png')
-    list_of_divs = []
-    for i in range(1, 3):
-        list_of_divs.append('images/divs/div_' + str(i) + '.png')
+    divs_image_sequence = tuple(map(lambda number: f'images/divs/div_{number}.png', (1, 2)))
 
-    no_parachute_speed = 150
-    with_parachute_speed = 90
-
-    open_parachute_y = randint(325, 375)
+    no_parachute_speed = 180
+    with_parachute_speed = 105
 
     def __init__(self, column: int, y: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.paratrooper_group)
-        self.image_cycle = itertools.cycle(tuple(self.list_of_divs))
+        self.image_cycle = itertools.cycle(self.divs_image_sequence)
         self.image = self.paratrooper_image
         self._column = column
         self.rect = self.image.get_rect()
@@ -296,6 +278,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.falling_velocity = self.no_parachute_speed
         self.parachute = None
         self.parachute_used = False
+        self.open_parachute_y = random.randint(325, 375)
 
         paratroopers_state.update()
 
@@ -320,16 +303,19 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def move(self):
         """Падение парашютиста"""
-        if pygame.sprite.spritecollideany(self, SpriteGroups.ground_group):
+        colliding_other_paratroopers = any(
+            map(lambda paratrooper: self is not paratrooper and pygame.sprite.collide_rect(self, paratrooper),
+                SpriteGroups.paratrooper_group))
+        if pygame.sprite.spritecollideany(self, SpriteGroups.ground_group) or colliding_other_paratroopers:
             self.is_moving = False
             if self.parachute is not None:
                 self.kill_parachute()
             else:
-                self.die()
+                paratroopers_state.kill_column(self.column)
             paratroopers_state.update()
 
         if self.is_moving:
-            displacement = self.falling_velocity // fps
+            displacement = self.falling_velocity / fps
             self.rect.y += displacement
             if self.rect.y >= self.open_parachute_y and not self.parachute_used:
                 self.open_parachute()
@@ -384,7 +370,7 @@ class Parachute(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = host.rect.x - self.rect.w // 2 + host.rect.w // 2
         self.rect.y = host.rect.y - 30
-        self.speed = 90
+        self.speed = Paratrooper.with_parachute_speed
 
         self.host = host
 
@@ -394,7 +380,7 @@ class Parachute(pygame.sprite.Sprite):
 
     def move(self):
         """Передвижение парашюта"""
-        displacement = self.speed // fps
+        displacement = self.speed / fps
         self.rect.y += displacement
 
     def destroy(self):
@@ -405,7 +391,9 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    static_gun_part = load_image('images/gun/static_part.png')
+    # static_gun_part = load_image('images/gun/static_part.png')
+    static_gun_part = load_image('images/gun/static_gun_part.png')
+    base_rect_image = load_image('images/gun/base_rect.png')
     left_angle = 190
     right_angle = 350
     center_x, center_y = 39, 33
@@ -431,8 +419,10 @@ class Gun(pygame.sprite.Sprite):
     def draw(self):
         blue_color = (85, 255, 255)
         self.image.fill((0, 0, 0))
-        pygame.draw.line(self.image, blue_color, (self.center_x, self.center_y), self.end_gun_point, width=8)
-        self.image.blit(self.static_gun_part, (0, 0))
+        if self.is_alive:
+            pygame.draw.line(self.image, blue_color, (self.center_x, self.center_y), self.end_gun_point, width=8)
+            self.image.blit(self.static_gun_part, (0, 0))
+        self.image.blit(self.base_rect_image, (0, 0))
 
     def update(self, *args, **kwargs):
         if args:
@@ -446,7 +436,7 @@ class Gun(pygame.sprite.Sprite):
                     self.is_moving = 0
                     Bullet(*self.end_gun_point, self.angle)
                 if event.key == pygame.K_w:
-                    self.is_alive = False
+                    self.destroy()
 
         if not args:
             self.angle += (self.angle_velocity / fps) * self.is_moving
@@ -459,15 +449,13 @@ class Gun(pygame.sprite.Sprite):
             if self.is_alive:
                 self.update_end_gun_point()
                 self.draw()
-            elif self.is_first:
-                self.is_first = False
-                self.destroy()
         self.angle %= 360
 
     def destroy(self):
         """У пушки тоже должна быть анимация уничтожения с вызовом класса Explode"""
-        explode_x, explode_y = self.pink_part_x + 340, self.rect_part_pink_y + 440
-        self.image.fill((0, 0, 0))
+        self.is_alive = False
+        self.draw()
+        explode_x, explode_y = self.pink_part_x + 340, self.rect_part_pink_y + 420
         Explode(explode_x, explode_y)
 
     def update_end_gun_point(self):
@@ -493,7 +481,7 @@ class Bullet(pygame.sprite.Sprite):
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.rect.y <= 0:
+            if not self.rect.colliderect(main_screen.get_rect()):
                 self.kill()
             else:
                 self.move()
@@ -599,6 +587,7 @@ class ParatroopersState:
     _left_side_cords_x = [45, 81, 117, 153, 189, 225, 261, 297, 333]  # Слева от пушки
     _right_side_cords_x = [465, 501, 537, 573, 609, 645, 681, 717, 753]  # Справа от пушки
     columns_cords = _left_side_cords_x + _right_side_cords_x
+    column_count = len(columns_cords)
 
     def __init__(self):
         self.left_on_ground_count = 0
@@ -653,7 +642,7 @@ class ParatroopersState:
     def get_blowing_group(self) -> list[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
         """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
         Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
-        if self.left_on_ground_count < 4 and self.right_on_ground_count < 4:
+        if not self.player_lost():
             return None
 
         blowing_group = []
@@ -671,7 +660,7 @@ class ParatroopersState:
 
         if self.right_on_ground_count >= 4:
             # Список переворачивается для эффективного извлечения через pop
-            right_columns = paratrooper_columns_copy[9::-1]
+            right_columns = paratrooper_columns_copy[9:][::-1]
             while True:
                 leftest_column = right_columns.pop()
                 while leftest_column:
@@ -685,7 +674,8 @@ class ParatroopersState:
         (Должно вызываться тогда, когда парашютист приземляется без парашюта)"""
         for paratrooper in self.paratrooper_columns[column]:
             paratrooper.kill()
-        # Здесь также будет вызов FallDeath спрайта
+        death_y_cord = 555
+        FallDeath(self.get_column_x(column), death_y_cord)
 
     def player_lost(self):
         """Возвращает булево значение, проигрывает ли игрок:
