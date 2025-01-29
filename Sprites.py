@@ -391,7 +391,6 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    # static_gun_part = load_image('images/gun/static_part.png')
     static_gun_part = load_image('images/gun/static_gun_part.png')
     base_rect_image = load_image('images/gun/base_rect.png')
     left_angle = 190
