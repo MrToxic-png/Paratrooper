@@ -424,6 +424,9 @@ class Gun(pygame.sprite.Sprite):
         self.image.blit(self.base_rect_image, (0, 0))
 
     def update(self, *args, **kwargs):
+        if not self.is_alive:
+            return
+
         if args:
             event = args[0]
             if event.type == pygame.KEYDOWN:
