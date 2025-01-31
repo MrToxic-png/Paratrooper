@@ -256,6 +256,7 @@ class Bomb(_AbstractBomb):
         self.horizontal_velocity = velocity_dict[way]
         self.current_x = x
         self.current_y = y
+        self.bomb_sound.play()
 
 
 class Paratrooper(pygame.sprite.Sprite):
@@ -475,6 +476,8 @@ class Bullet(pygame.sprite.Sprite):
 
     shot_sound = pygame.mixer.Sound('audio/shot.ogg')
 
+    crash_sound = pygame.mixer.Sound('audio/crash.ogg')
+
     def __init__(self, bullet_spawn_x: int, bullet_spawn_y: int, angle: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.bullet_group)
@@ -498,6 +501,7 @@ class Bullet(pygame.sprite.Sprite):
             if collided_enemies:
                 collided_enemy = collided_enemies[0]
                 collided_enemy.destroy()
+                self.crash_sound.play()
                 self.kill()
 
     def move(self):
@@ -525,15 +529,12 @@ class Explode(pygame.sprite.Sprite):
     explode_images = tuple(map(lambda number: load_image(f'images/aviation_explosion/enemy_explosion_{number}.png'),
                                range(1, 11)))
 
-    crash_sound = pygame.mixer.Sound('audio/crash.ogg')
-
     def __init__(self, x: int, y: int):
         super().__init__(SpriteGroups.main_group, SpriteGroups.explode_group)
         self.image_iter = iter(self.explode_images)
         self.image = next(self.image_iter)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
-        self.crash_sound.play()
 
     def update(self, *args, **kwargs):
         if args:
