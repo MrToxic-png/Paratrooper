@@ -244,6 +244,8 @@ class _AbstractBomb(pygame.sprite.Sprite):
 class Bomb(_AbstractBomb):
     """Спрайт бомбы, сбрасываемой самолетом"""
 
+    bomb_sound = pygame.mixer.Sound('audio/bomb.ogg')
+
     def __init__(self, way: str, x: int, y: int):
         super().__init__()
 
@@ -471,6 +473,8 @@ class Bullet(pygame.sprite.Sprite):
     parachute_image = load_image('images/bullet.png')
     bullet_velocity = 300
 
+    shot_sound = pygame.mixer.Sound('audio/shot.ogg')
+
     def __init__(self, bullet_spawn_x: int, bullet_spawn_y: int, angle: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.bullet_group)
@@ -480,6 +484,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = bullet_spawn_x + 360
         self.rect.y = bullet_spawn_y + 460
         self.angle = angle
+        self.shot_sound.play()
 
     def update(self, *args, **kwargs):
         if not args:
@@ -520,12 +525,15 @@ class Explode(pygame.sprite.Sprite):
     explode_images = tuple(map(lambda number: load_image(f'images/aviation_explosion/enemy_explosion_{number}.png'),
                                range(1, 11)))
 
+    crash_sound = pygame.mixer.Sound('audio/crash.ogg')
+
     def __init__(self, x: int, y: int):
         super().__init__(SpriteGroups.main_group, SpriteGroups.explode_group)
         self.image_iter = iter(self.explode_images)
         self.image = next(self.image_iter)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
+        self.crash_sound.play()
 
     def update(self, *args, **kwargs):
         if args:
