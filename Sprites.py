@@ -473,8 +473,6 @@ class Gun(pygame.sprite.Sprite):
                 if event.key == pygame.K_UP:
                     self.is_moving = 0
                     Bullet(*self.end_gun_point, self.angle)
-                if event.key == pygame.K_w:
-                    self.destroy()
 
         if not args:
             self.angle += (self.angle_velocity / fps) * self.is_moving
