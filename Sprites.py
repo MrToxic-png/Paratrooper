@@ -8,6 +8,7 @@ import pygame
 
 import CustomEvents
 from init_pygame import width, fps, main_screen
+from GameProcess import Game
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -493,6 +494,7 @@ class Gun(pygame.sprite.Sprite):
         """У пушки тоже должна быть анимация уничтожения с вызовом класса Explode"""
         self.is_alive = False
         self.draw()
+        soundpad.play(1)
         explode_x, explode_y = self.pink_part_x + 340, self.rect_part_pink_y + 420
         Explode(explode_x, explode_y)
         break_game()
@@ -508,10 +510,6 @@ class Bullet(pygame.sprite.Sprite):
     parachute_image = load_image('assets/images/bullet.png')
     bullet_velocity = 300
 
-    shot_sound = pygame.mixer.Sound('assets/audio/shot.ogg')
-
-    crash_sound = pygame.mixer.Sound('assets/audio/crash.ogg')
-
     def __init__(self, bullet_spawn_x: int, bullet_spawn_y: int, angle: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.bullet_group)
@@ -522,7 +520,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = bullet_spawn_y + 460
         self.angle = angle
         gun.score = max(0, gun.score - 1)
-        self.shot_sound.play()
+        soundpad.play(3)
 
     def update(self, *args, **kwargs):
         if not args:
@@ -536,7 +534,7 @@ class Bullet(pygame.sprite.Sprite):
             if collided_enemies:
                 collided_enemy = collided_enemies[0]
                 collided_enemy.destroy()
-                self.crash_sound.play()
+                soundpad.play(2)
                 self.kill()
 
     def move(self):
@@ -752,10 +750,29 @@ class ParatroopersState:
         return any(map(lambda column: any(map(lambda paratrooper: paratrooper.in_air, column)),
                        self.paratrooper_columns))
 
+class Soundpad:
+
+    intro_sound = pygame.mixer.Sound('assets/audio/intro.ogg')
+    outro_sound = pygame.mixer.Sound('assets/audio/outro.ogg')
+
+    shot_sound = pygame.mixer.Sound('assets/audio/shot.ogg')
+    crash_sound = pygame.mixer.Sound('assets/audio/crash.ogg')
+
+    def __init__(self):
+        self.all_sounds = [self.intro_sound, self.outro_sound, self.crash_sound, self.shot_sound]
+
+    def play(self, sound):
+        pygame.mixer.Sound.play(self.all_sounds[sound])
+
+    def stop(self, sound):
+        pygame.mixer.Sound.stop(self.all_sounds[sound])
+
+
 
 # Инициализация глобальных переменных
 gun = Gun()
 ground = Ground()
+soundpad = Soundpad()
 paratroopers_state = ParatroopersState()
 _end_game = False
 
@@ -780,3 +797,4 @@ def break_game():
 def game_is_end():
     """Возвращает закончилась ли игра"""
     return _end_game
+

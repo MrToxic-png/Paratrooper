@@ -2,6 +2,10 @@ import sys
 
 import pygame
 
+from Sprites import SpriteGroups, soundpad
+from Wave import EnemyWave
+from init_pygame import width, height, fps, main_screen
+from  GameProcess import Game
 from GameProcess import Game
 from init_pygame import fps, main_screen
 
@@ -15,8 +19,7 @@ class MainWindow:
         main_screen.blit(image, (0, 0))
         pygame.display.flip()
 
-        intro_sound = pygame.mixer.Sound('assets/audio/intro.ogg')
-        intro_sound.play()
+        soundpad.play(0)
 
         while True:
             event = pygame.event.wait()
@@ -24,7 +27,7 @@ class MainWindow:
                 self.terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    intro_sound.stop()
+                    soundpad.stop(0)
                     break
                 if event.key == pygame.K_i:
                     self.show_instructions()
@@ -34,13 +37,23 @@ class MainWindow:
 
     def run(self):
         self.show_intro()
+
         clock = pygame.time.Clock()
+
+        wave = EnemyWave()
+
         while True:
+            main_screen.fill((0, 0, 0))
             for event in pygame.event.get():
-                self.game.update(event)
+                SpriteGroups.main_group.update(event)
+                self.game.update()
+                wave.update(event)
                 if event.type == pygame.QUIT:
                     self.terminate()
+            SpriteGroups.main_group.update()
+            wave.update()
             self.game.update()
+            SpriteGroups.main_group.draw(main_screen)
             pygame.display.flip()
             clock.tick(fps)
 
