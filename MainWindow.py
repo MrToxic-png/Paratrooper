@@ -2,10 +2,8 @@ import sys
 
 import pygame
 
-from Sprites import SpriteGroups
-from Wave import EnemyWave
-from init_pygame import width, height, fps, main_screen
-from  GameProcess import Game
+from GameProcess import Game
+from init_pygame import fps, main_screen
 
 
 class MainWindow:
@@ -36,23 +34,13 @@ class MainWindow:
 
     def run(self):
         self.show_intro()
-
         clock = pygame.time.Clock()
-
-        wave = EnemyWave()
-
         while True:
-            main_screen.fill((0, 0, 0))
             for event in pygame.event.get():
-                SpriteGroups.main_group.update(event)
-                self.game.update()
-                wave.update(event)
+                self.game.update(event)
                 if event.type == pygame.QUIT:
                     self.terminate()
-            SpriteGroups.main_group.update()
-            wave.update()
             self.game.update()
-            SpriteGroups.main_group.draw(main_screen)
             pygame.display.flip()
             clock.tick(fps)
 

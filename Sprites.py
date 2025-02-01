@@ -8,7 +8,6 @@ import pygame
 
 import CustomEvents
 from init_pygame import width, fps, main_screen
-from GameProcess import Game
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -98,7 +97,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение вертолета"""
-        Game.score += 5
+        gun.score += 10
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
         Explode(explode_x, explode_y)
@@ -109,7 +108,8 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
 
 class HelicopterLeft(_AbstractHelicopter):
-    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(
+        map(lambda number: load_image(f'assets/images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
 
     height = 50
     helicopter_velocity = _flying_velocity
@@ -123,7 +123,8 @@ class HelicopterLeft(_AbstractHelicopter):
 
 
 class HelicopterRight(_AbstractHelicopter):
-    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(
+        map(lambda number: load_image(f'assets/images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
 
     height = 10
     helicopter_velocity = -_flying_velocity
@@ -174,7 +175,7 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение самолета"""
-        Game.score += 5
+        gun.score += 10
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
         Explode(explode_x, explode_y)
@@ -258,16 +259,16 @@ class _AbstractBomb(pygame.sprite.Sprite):
     def update(self, *args, **kwargs):
         if not args:
             self.move()
-            if pygame.sprite.collide_mask(self, gun) and gun.is_alive:
-                gun.destroy()
-                self.kill()
-            if not self.rect.colliderect(main_screen.get_rect()):
+            if pygame.sprite.collide_mask(self, gun) or not self.rect.colliderect(main_screen.get_rect()):
+                if gun.is_alive:
+                    gun.destroy()
                 self.kill()
 
     def destroy(self):
         """Уничтожение бомбы"""
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
+        gun.score += 30
         BombExplode(explode_x, explode_y)
 
 
@@ -362,6 +363,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.kill_parachute()
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
+        gun.score += 5
         Explode(explode_x, explode_y)
 
     def die(self):
@@ -447,6 +449,7 @@ class Gun(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = 360, 460
         self.end_gun_point = tuple(map(round, (self.gun_length * cos(radians(self.angle)) + self.center_x,
                                                self.gun_length * sin(radians(self.angle)) + self.center_y)))
+        self.score = 0
 
     def draw(self):
         blue_color = (85, 255, 255)
@@ -492,6 +495,7 @@ class Gun(pygame.sprite.Sprite):
         self.draw()
         explode_x, explode_y = self.pink_part_x + 340, self.rect_part_pink_y + 420
         Explode(explode_x, explode_y)
+        break_game()
 
     def update_end_gun_point(self):
         """Обновление координат крайней точки"""
@@ -517,8 +521,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = bullet_spawn_x + 360
         self.rect.y = bullet_spawn_y + 460
         self.angle = angle
-        if Game.score != 0:
-            Game.score -= 1
+        gun.score = max(0, gun.score - 1)
         self.shot_sound.play()
 
     def update(self, *args, **kwargs):
@@ -533,7 +536,6 @@ class Bullet(pygame.sprite.Sprite):
             if collided_enemies:
                 collided_enemy = collided_enemies[0]
                 collided_enemy.destroy()
-                Game.score += 5
                 self.crash_sound.play()
                 self.kill()
 
@@ -719,6 +721,7 @@ class ParatroopersState:
         (Должно вызываться тогда, когда парашютист приземляется без парашюта)"""
         for paratrooper in self.paratrooper_columns[column]:
             paratrooper.kill()
+            gun.score += 5
         death_y_cord = 555
         FallDeath(self.get_column_x(column), death_y_cord)
 
@@ -750,8 +753,30 @@ class ParatroopersState:
                        self.paratrooper_columns))
 
 
-# Данные спрайты существуют в единственном экземпляре с начала игры, поэтому их можно сразу инициализировать
+# Инициализация глобальных переменных
 gun = Gun()
 ground = Ground()
-
 paratroopers_state = ParatroopersState()
+_end_game = False
+
+
+def restart():
+    """Перезагрузка счетчика и спрайтов"""
+    global gun, ground, paratroopers_state, _end_game
+    for sprite in SpriteGroups.main_group.sprites():
+        sprite.kill()
+    gun = Gun()
+    ground = Ground()
+    paratroopers_state = ParatroopersState()
+    _end_game = False
+
+
+def break_game():
+    """Устанавливает конец игры"""
+    global _end_game
+    _end_game = True
+
+
+def game_is_end():
+    """Возвращает закончилась ли игра"""
+    return _end_game

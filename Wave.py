@@ -4,11 +4,10 @@
 -Информация о всех вертолетах, каждый из которых в свою очередь будет хранить в себе информацию о том,
 когда и где он сбросит парашютистов
 -Информация о всех самолетах (самолеты тоже можно будет разделить на мини-волны) и о том, сбросят они бомбу или нет"""
-from itertools import count
 from random import randint
 
 import CustomEvents
-from Sprites import HelicopterLeft, HelicopterRight, JetLeft, JetRight
+from Sprites import HelicopterLeft, HelicopterRight, JetLeft, JetRight, paratroopers_state, SpriteGroups
 
 
 class EnemyWave:
@@ -21,8 +20,13 @@ class EnemyWave:
         self.jet_or_helicopter = True
         self.is_new_stage = False
         self.count = 0
+        self.wave_stopped = False
 
-    def update(self, *args, **kwargs):
+    def update(self, *args):
+        SpriteGroups.main_group.update(*args)
+        if self.wave_stopped:
+            return
+
         if args:
             event = args[0]
             if event.type == CustomEvents.SPAWN_NEW_AVIATION and not self.is_new_stage:
@@ -56,7 +60,13 @@ class EnemyWave:
             HelicopterRight()
 
     def spawn_jet(self):
+        if paratroopers_state.player_lost():
+            return
+
         if randint(0, 1) == 0:
             JetLeft()
         else:
             JetRight()
+
+    def stop_wave(self):
+        self.wave_stopped = True
