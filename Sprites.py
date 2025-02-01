@@ -366,11 +366,6 @@ class Paratrooper(pygame.sprite.Sprite):
         gun.score += 5
         Explode(explode_x, explode_y)
 
-    def die(self):
-        dead_x, dead_y = self.rect.x, self.rect.y
-        self.kill()
-        FallDeath(dead_x, dead_y)
-
     def open_parachute(self):
         """Раскрытие парашюта"""
         if self.parachute_used:
@@ -722,6 +717,7 @@ class ParatroopersState:
             gun.score += 5
         death_y_cord = 555
         FallDeath(self.get_column_x(column), death_y_cord)
+        self.update()
 
     def player_lost(self):
         """Возвращает булево значение, проигрывает ли игрок:
