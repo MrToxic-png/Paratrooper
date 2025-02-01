@@ -304,6 +304,7 @@ class Paratrooper(pygame.sprite.Sprite):
                          SpriteGroups.paratrooper_group)
         self.image_cycle = itertools.cycle(self.divs_image_sequence)
         self.image = self.paratrooper_image
+        self.mask = pygame.mask.from_surface(self.image)
         self._column = column
         self.rect = self.image.get_rect()
         self.rect.x = paratroopers_state.get_column_x(column)
@@ -730,7 +731,7 @@ class ParatroopersState:
         for column in self.paratrooper_columns:
             column.sort(key=lambda paratrooper: paratrooper.rect.y, reverse=True)
 
-        if self.is_first and _end_game:
+        if self.is_first and self.player_lost():
             self.is_first = False
             for index, paratrooper in enumerate(self.get_blowing_group()):
                 paratrooper.blowing_number = index + 1
