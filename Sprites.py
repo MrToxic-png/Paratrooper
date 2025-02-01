@@ -330,7 +330,7 @@ class Paratrooper(pygame.sprite.Sprite):
         if not args:
             if self.is_moving:
                 self.move()
-            elif _end_game:
+            elif paratroopers_state.player_lost():
                 self.animation()
 
     def animation(self):
