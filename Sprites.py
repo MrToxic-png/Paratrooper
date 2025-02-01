@@ -8,7 +8,6 @@ import pygame
 
 import CustomEvents
 from init_pygame import width, fps, main_screen
-from GameProcess import Game
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -314,6 +313,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.parachute = None
         self.parachute_used = False
         self.open_parachute_y = random.randint(325, 375)
+        self.blowing_number = 0
 
         paratroopers_state.update()
 
@@ -328,13 +328,58 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.rect.y >= 580:
-                self.animation()
-            elif self.is_moving:
+            if self.is_moving:
                 self.move()
+            elif _end_game:
+                self.animation()
 
     def animation(self):
         """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
+        collided_gun = pygame.sprite.spritecollide(self, SpriteGroups.gun_group, False,
+                                                       pygame.sprite.collide_mask)
+        collided_guy = pygame.sprite.spritecollide(self, SpriteGroups.paratrooper_group, False,
+                                                       pygame.sprite.collide_mask)
+        if self.blowing_number == 1 and not collided_gun:
+            if self.column <= 9:
+                self.rect.x += self.rect.w
+            else:
+                self.rect.x -= self.rect.w
+            self.image = next(self.image_cycle)
+        elif self.blowing_number == 2:
+            if not collided_guy:
+                if self.column <= 9:
+                    self.rect.x += self.rect.w
+                else:
+                    self.rect.x -= self.rect.w
+                self.image = next(self.image_cycle)
+            elif not collided_gun:
+                self.rect.y -= self.rect.h
+                if self.column <= 9:
+                    self.rect.x += self.rect.w
+                else:
+                    self.rect.x -= self.rect.w
+        elif self.blowing_number == 3:
+            if not collided_guy:
+                if self.column <= 9:
+                    self.rect.x += self.rect.w
+                else:
+                    self.rect.x -= self.rect.w
+                self.image = next(self.image_cycle)
+        elif self.blowing_number == 4:
+            if not collided_guy:
+                if self.column <= 9:
+                    self.rect.x += self.rect.w
+                else:
+                    self.rect.x -= self.rect.w
+                self.image = next(self.image_cycle)
+            elif not collided_gun:
+                self.rect.y -= self.rect.h
+                if self.column <= 9:
+                    self.rect.x += self.rect.w
+                else:
+                    self.rect.x -= self.rect.w
+
+
 
     def move(self):
         """Падение парашютиста"""
@@ -639,6 +684,7 @@ class ParatroopersState:
         self.right_on_ground_count = 0
         self.paratrooper_columns = [[] for _ in range(18)]
         self._dropping_allowed = True
+        self.is_first = True
 
     @property
     def dropping_allowed(self):
@@ -683,6 +729,11 @@ class ParatroopersState:
 
         for column in self.paratrooper_columns:
             column.sort(key=lambda paratrooper: paratrooper.rect.y, reverse=True)
+
+        if self.is_first and _end_game:
+            self.is_first = False
+            for index, paratrooper in enumerate(self.get_blowing_group()):
+                paratrooper.blowing_number = index + 1
 
     def get_blowing_group(self) -> list[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
         """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
