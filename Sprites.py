@@ -8,6 +8,7 @@ import pygame
 
 import CustomEvents
 from init_pygame import width, fps, main_screen
+from GameProcess import Game
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -97,6 +98,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение вертолета"""
+        Game.score += 5
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
         Explode(explode_x, explode_y)
@@ -107,7 +109,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
 
 class HelicopterLeft(_AbstractHelicopter):
-    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
 
     height = 50
     helicopter_velocity = _flying_velocity
@@ -121,7 +123,7 @@ class HelicopterLeft(_AbstractHelicopter):
 
 
 class HelicopterRight(_AbstractHelicopter):
-    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
 
     height = 10
     helicopter_velocity = -_flying_velocity
@@ -172,6 +174,7 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение самолета"""
+        Game.score += 5
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
         Explode(explode_x, explode_y)
@@ -182,8 +185,10 @@ class _AbstractJet(pygame.sprite.Sprite):
 
 
 class JetLeft(_AbstractJet):
-    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/jet_left_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/jet_left_{number}.png'), (1, 2, 3)))
     jet_velocity = _flying_velocity
+
+    height = 50
 
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
@@ -202,7 +207,7 @@ class JetLeft(_AbstractJet):
 
 
 class JetRight(_AbstractJet):
-    image_sequence = tuple(map(lambda number: load_image(f'images/aviation/jet_right_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/jet_right_{number}.png'), (1, 2, 3)))
     jet_velocity = -_flying_velocity
 
     def __init__(self):
@@ -223,7 +228,7 @@ class JetRight(_AbstractJet):
 
 class _AbstractBomb(pygame.sprite.Sprite):
     """Спрайт бомбы, сбрасываемой самолетом"""
-    bomb_image = load_image('images/bomb.png')
+    bomb_image = load_image('assets/images/bomb.png')
 
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
@@ -269,6 +274,8 @@ class _AbstractBomb(pygame.sprite.Sprite):
 class Bomb(_AbstractBomb):
     """Спрайт бомбы, сбрасываемой самолетом"""
 
+    bomb_sound = pygame.mixer.Sound('assets/audio/bomb.ogg')
+
     def __init__(self, way: str, x: int, y: int):
         super().__init__()
 
@@ -279,11 +286,12 @@ class Bomb(_AbstractBomb):
         self.horizontal_velocity = velocity_dict[way]
         self.current_x = x
         self.current_y = y
+        self.bomb_sound.play()
 
 
 class Paratrooper(pygame.sprite.Sprite):
     """Спрайт парашютиста"""
-    paratrooper_image = load_image('images/trooper.png')
+    paratrooper_image = load_image('assets/images/trooper.png')
     divs_image_sequence = tuple(map(lambda number: f'images/divs/div_{number}.png', (1, 2)))
 
     no_parachute_speed = 180
@@ -385,7 +393,7 @@ class Paratrooper(pygame.sprite.Sprite):
 
 class Parachute(pygame.sprite.Sprite):
     """Спрайт парашюта"""
-    parachute_image = load_image('images/para.png')
+    parachute_image = load_image('assets/images/para.png')
 
     def __init__(self, host: Paratrooper):
         super().__init__(SpriteGroups.main_group,
@@ -416,8 +424,8 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    static_gun_part = load_image('images/gun/static_gun_part.png')
-    base_rect_image = load_image('images/gun/base_rect.png')
+    static_gun_part = load_image('assets/images/gun/static_gun_part.png')
+    base_rect_image = load_image('assets/images/gun/base_rect.png')
     left_angle = 190
     right_angle = 350
     center_x, center_y = 39, 33
@@ -449,6 +457,9 @@ class Gun(pygame.sprite.Sprite):
         self.image.blit(self.base_rect_image, (0, 0))
 
     def update(self, *args, **kwargs):
+        if not self.is_alive:
+            return
+
         if args:
             event = args[0]
             if event.type == pygame.KEYDOWN:
@@ -490,8 +501,12 @@ class Gun(pygame.sprite.Sprite):
 
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
-    parachute_image = load_image('images/bullet.png')
+    parachute_image = load_image('assets/images/bullet.png')
     bullet_velocity = 300
+
+    shot_sound = pygame.mixer.Sound('assets/audio/shot.ogg')
+
+    crash_sound = pygame.mixer.Sound('assets/audio/crash.ogg')
 
     def __init__(self, bullet_spawn_x: int, bullet_spawn_y: int, angle: int):
         super().__init__(SpriteGroups.main_group,
@@ -502,6 +517,9 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = bullet_spawn_x + 360
         self.rect.y = bullet_spawn_y + 460
         self.angle = angle
+        if Game.score != 0:
+            Game.score -= 1
+        self.shot_sound.play()
 
     def update(self, *args, **kwargs):
         if not args:
@@ -515,6 +533,8 @@ class Bullet(pygame.sprite.Sprite):
             if collided_enemies:
                 collided_enemy = collided_enemies[0]
                 collided_enemy.destroy()
+                Game.score += 5
+                self.crash_sound.play()
                 self.kill()
 
     def move(self):
@@ -539,7 +559,8 @@ class Ground(pygame.sprite.Sprite):
 
 class Explode(pygame.sprite.Sprite):
     """Спрайт с анимацией взрыва"""
-    explode_images = tuple(map(lambda number: load_image(f'images/aviation_explosion/enemy_explosion_{number}.png'),
+    explode_images = tuple(map(lambda number: load_image(
+        f'assets/images/aviation_explosion/enemy_explosion_{number}.png'),
                                range(1, 11)))
 
     def __init__(self, x: int, y: int):
@@ -561,7 +582,7 @@ class Explode(pygame.sprite.Sprite):
 
 class BombExplode(pygame.sprite.Sprite):
     """Спрайт с анимацией взрыва бомбы"""
-    explode_images = tuple(map(lambda number: load_image(f'images/bomb_explosion/explode_{number}.png'),
+    explode_images = tuple(map(lambda number: load_image(f'assets/images/bomb_explosion/explode_{number}.png'),
                                range(1, 10)))
 
     def __init__(self, x: int, y: int):
@@ -584,7 +605,7 @@ class BombExplode(pygame.sprite.Sprite):
 class FallDeath(pygame.sprite.Sprite):
     """Спрайт с анимацией смерти от падения
     реализация должна быть примерно похожа на Explode"""
-    death_images = tuple(map(lambda number: load_image(f'images/die_animation/skull_{number}.png'),
+    death_images = tuple(map(lambda number: load_image(f'assets/images/die_animation/skull_{number}.png'),
                              range(1, 4)))
 
     def __init__(self, x: int, y: int):

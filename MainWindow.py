@@ -5,16 +5,20 @@ import pygame
 from Sprites import SpriteGroups
 from Wave import EnemyWave
 from init_pygame import width, height, fps, main_screen
+from  GameProcess import Game
 
 
 class MainWindow:
     def __init__(self):
-        pass
+        self.game = Game()
 
     def show_intro(self):
-        image = pygame.image.load('images/aviation/intro.png')
+        image = pygame.image.load('assets/images/aviation/intro.png')
         main_screen.blit(image, (0, 0))
         pygame.display.flip()
+
+        intro_sound = pygame.mixer.Sound('assets/audio/intro.ogg')
+        intro_sound.play()
 
         while True:
             event = pygame.event.wait()
@@ -22,6 +26,7 @@ class MainWindow:
                 self.terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
+                    intro_sound.stop()
                     break
                 if event.key == pygame.K_i:
                     self.show_instructions()
@@ -33,20 +38,21 @@ class MainWindow:
         self.show_intro()
 
         clock = pygame.time.Clock()
-        screen = pygame.display.set_mode((width, height))
 
-        wave = EnemyWave(4, 3)
+        wave = EnemyWave()
 
         while True:
             main_screen.fill((0, 0, 0))
             for event in pygame.event.get():
                 SpriteGroups.main_group.update(event)
+                self.game.update()
                 wave.update(event)
                 if event.type == pygame.QUIT:
                     self.terminate()
             SpriteGroups.main_group.update()
             wave.update()
-            SpriteGroups.main_group.draw(screen)
+            self.game.update()
+            SpriteGroups.main_group.draw(main_screen)
             pygame.display.flip()
             clock.tick(fps)
 

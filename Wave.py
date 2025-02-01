@@ -4,6 +4,7 @@
 -Информация о всех вертолетах, каждый из которых в свою очередь будет хранить в себе информацию о том,
 когда и где он сбросит парашютистов
 -Информация о всех самолетах (самолеты тоже можно будет разделить на мини-волны) и о том, сбросят они бомбу или нет"""
+from itertools import count
 from random import randint
 
 import CustomEvents
@@ -14,20 +15,17 @@ class EnemyWave:
     max_helicopters = randint(8, 10)
     max_jet = randint(3, 5)
 
-    def __init__(self, mini_waves, next_waves=1):
-        self.mini_waves = mini_waves
-        self.next_waves = next_waves
+    def __init__(self):
         self.helicopter_count = 0
         self.jet_count = 0
         self.jet_or_helicopter = True
+        self.is_new_stage = False
+        self.count = 0
 
     def update(self, *args, **kwargs):
-        if self.mini_waves == 0:
-            if self.next_waves != 0:
-                return EnemyWave(self.next_waves)
         if args:
             event = args[0]
-            if event.type == CustomEvents.SPAWN_NEW_AVIATION:
+            if event.type == CustomEvents.SPAWN_NEW_AVIATION and not self.is_new_stage:
                 if self.jet_or_helicopter and self.helicopter_count <= self.max_helicopters:
                     self.spawn_helicopter()
                     self.helicopter_count += 1
@@ -35,14 +33,21 @@ class EnemyWave:
                     if self.helicopter_count > self.max_helicopters:
                         self.jet_or_helicopter = False
                         self.helicopter_count = 0
-                        self.mini_waves -= 1
-                    if self.jet_count <= self.max_jet:
+                        self.is_new_stage = True
+                        self.max_jet = randint(3, 5)
+                    elif self.jet_count <= self.max_jet:
                         self.spawn_jet()
                         self.jet_count += 1
                     else:
                         self.jet_or_helicopter = True
                         self.jet_count = 0
-                        self.mini_waves -= 1
+                        self.is_new_stage = True
+                        self.max_helicopters = randint(8, 10)
+            if event.type == CustomEvents.CD_NEW_WAVE and self.is_new_stage:
+                self.count += 1
+                if self.count != 1:
+                    self.count = 0
+                    self.is_new_stage = False
 
     def spawn_helicopter(self):
         if randint(0, 1) == 0:

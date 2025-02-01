@@ -11,3 +11,7 @@ pygame.time.set_timer(UPDATE_ANIMATION, 200)
 SPAWN_NEW_AVIATION = pygame.USEREVENT + 2
 
 pygame.time.set_timer(SPAWN_NEW_AVIATION, 1600)
+
+CD_NEW_WAVE = pygame.USEREVENT + 3
+
+pygame.time.set_timer(CD_NEW_WAVE, 3200)
