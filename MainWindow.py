@@ -2,7 +2,7 @@ import sys
 
 import pygame
 
-from Sprites import SpriteGroups
+from Sprites import SpriteGroups, soundpad
 from Wave import EnemyWave
 from init_pygame import width, height, fps, main_screen
 from  GameProcess import Game
@@ -17,8 +17,7 @@ class MainWindow:
         main_screen.blit(image, (0, 0))
         pygame.display.flip()
 
-        intro_sound = pygame.mixer.Sound('assets/audio/intro.ogg')
-        intro_sound.play()
+        soundpad.play(0)
 
         while True:
             event = pygame.event.wait()
@@ -26,7 +25,7 @@ class MainWindow:
                 self.terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    intro_sound.stop()
+                    soundpad.stop(0)
                     break
                 if event.key == pygame.K_i:
                     self.show_instructions()

@@ -13,6 +13,7 @@ class Game:
         pass
 
     def draw_score(self):
+        main_screen.fill((0, 0, 0))
         score_font = pygame.font.Font("assets/super-legend-boy.otf", 23)
         if self.score != 0:
             score_text = score_font.render(str(self.score), True, (255, 84, 255))
