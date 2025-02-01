@@ -8,7 +8,6 @@ import pygame
 
 import CustomEvents
 from init_pygame import width, fps, main_screen
-from GameProcess import Game
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -98,7 +97,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение вертолета"""
-        Game.score += 5
+        gun.score += 10
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
         Explode(explode_x, explode_y)
@@ -109,7 +108,8 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
 
 class HelicopterLeft(_AbstractHelicopter):
-    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(
+        map(lambda number: load_image(f'assets/images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
 
     height = 50
     helicopter_velocity = _flying_velocity
@@ -123,7 +123,8 @@ class HelicopterLeft(_AbstractHelicopter):
 
 
 class HelicopterRight(_AbstractHelicopter):
-    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(
+        map(lambda number: load_image(f'assets/images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
 
     height = 10
     helicopter_velocity = -_flying_velocity
@@ -149,6 +150,7 @@ class _AbstractJet(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.y = self.height
+        self.dropping_bomb = random.random() < 0.5
 
     def update(self, *args, **kwargs):
         if args:
@@ -157,6 +159,8 @@ class _AbstractJet(pygame.sprite.Sprite):
                 self.animation()
         if not args:
             self.move()
+            if self.dropping_bomb:
+                self.drop_bomb()
 
     def animation(self):
         """Анимация движения самолета"""
@@ -171,13 +175,14 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def destroy(self):
         """Уничтожение самолета"""
-        Game.score += 5
+        gun.score += 10
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
         Explode(explode_x, explode_y)
 
     def drop_bomb(self):
         """Сброс бомбы"""
+        return
 
 
 class JetLeft(_AbstractJet):
@@ -193,6 +198,14 @@ class JetLeft(_AbstractJet):
                          SpriteGroups.left_jet_group)
         self.rect.x = -self.rect.w
 
+    def drop_bomb(self):
+        if not gun.is_alive:
+            return
+
+        if self.dropping_bomb and -3 <= self.rect.x <= 3:
+            Bomb('right', self.rect.x, self.rect.y + self.rect.h)
+            self.dropping_bomb = False
+
 
 class JetRight(_AbstractJet):
     image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/jet_right_{number}.png'), (1, 2, 3)))
@@ -204,6 +217,14 @@ class JetRight(_AbstractJet):
                          SpriteGroups.jet_group,
                          SpriteGroups.right_jet_group)
         self.rect.x = width
+
+    def drop_bomb(self):
+        if not gun.is_alive:
+            return
+
+        if self.dropping_bomb and width - 3 <= self.rect.x + self.rect.w <= width + 3:
+            Bomb('left', self.rect.x + self.rect.w, self.rect.y + self.rect.h)
+            self.dropping_bomb = False
 
 
 class _AbstractBomb(pygame.sprite.Sprite):
@@ -238,11 +259,16 @@ class _AbstractBomb(pygame.sprite.Sprite):
     def update(self, *args, **kwargs):
         if not args:
             self.move()
+            if pygame.sprite.collide_mask(self, gun) or not self.rect.colliderect(main_screen.get_rect()):
+                if gun.is_alive:
+                    gun.destroy()
+                self.kill()
 
     def destroy(self):
         """Уничтожение бомбы"""
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
+        gun.score += 30
         BombExplode(explode_x, explode_y)
 
 
@@ -337,6 +363,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.kill_parachute()
         explode_x, explode_y = self.rect.x, self.rect.y
         self.kill()
+        gun.score += 5
         Explode(explode_x, explode_y)
 
     def die(self):
@@ -422,6 +449,7 @@ class Gun(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = 360, 460
         self.end_gun_point = tuple(map(round, (self.gun_length * cos(radians(self.angle)) + self.center_x,
                                                self.gun_length * sin(radians(self.angle)) + self.center_y)))
+        self.score = 0
 
     def draw(self):
         blue_color = (85, 255, 255)
@@ -465,9 +493,9 @@ class Gun(pygame.sprite.Sprite):
         """У пушки тоже должна быть анимация уничтожения с вызовом класса Explode"""
         self.is_alive = False
         self.draw()
-        soundpad.play(1)
         explode_x, explode_y = self.pink_part_x + 340, self.rect_part_pink_y + 420
         Explode(explode_x, explode_y)
+        break_game()
 
     def update_end_gun_point(self):
         """Обновление координат крайней точки"""
@@ -480,6 +508,10 @@ class Bullet(pygame.sprite.Sprite):
     parachute_image = load_image('assets/images/bullet.png')
     bullet_velocity = 300
 
+    shot_sound = pygame.mixer.Sound('assets/audio/shot.ogg')
+
+    crash_sound = pygame.mixer.Sound('assets/audio/crash.ogg')
+
     def __init__(self, bullet_spawn_x: int, bullet_spawn_y: int, angle: int):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.bullet_group)
@@ -489,9 +521,8 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = bullet_spawn_x + 360
         self.rect.y = bullet_spawn_y + 460
         self.angle = angle
-        if Game.score != 0:
-            Game.score -= 1
-        soundpad.play(3)
+        gun.score = max(0, gun.score - 1)
+        self.shot_sound.play()
 
     def update(self, *args, **kwargs):
         if not args:
@@ -505,8 +536,7 @@ class Bullet(pygame.sprite.Sprite):
             if collided_enemies:
                 collided_enemy = collided_enemies[0]
                 collided_enemy.destroy()
-                Game.score += 5
-                soundpad.play(2)
+                self.crash_sound.play()
                 self.kill()
 
     def move(self):
@@ -691,6 +721,7 @@ class ParatroopersState:
         (Должно вызываться тогда, когда парашютист приземляется без парашюта)"""
         for paratrooper in self.paratrooper_columns[column]:
             paratrooper.kill()
+            gun.score += 5
         death_y_cord = 555
         FallDeath(self.get_column_x(column), death_y_cord)
 
@@ -721,29 +752,31 @@ class ParatroopersState:
         return any(map(lambda column: any(map(lambda paratrooper: paratrooper.in_air, column)),
                        self.paratrooper_columns))
 
-class Soundpad:
 
-    intro_sound = pygame.mixer.Sound('assets/audio/intro.ogg')
-    outro_sound = pygame.mixer.Sound('assets/audio/outro.ogg')
-
-    shot_sound = pygame.mixer.Sound('assets/audio/shot.ogg')
-    crash_sound = pygame.mixer.Sound('assets/audio/crash.ogg')
-
-    def __init__(self):
-        self.all_sounds = [self.intro_sound, self.outro_sound, self.crash_sound, self.shot_sound]
-
-    def play(self, sound):
-        pygame.mixer.Sound.play(self.all_sounds[sound])
-
-    def stop(self, sound):
-        pygame.mixer.Sound.stop(self.all_sounds[sound])
-
-
-
-# Данные спрайты существуют в единственном экземпляре с начала игры, поэтому их можно сразу инициализировать
+# Инициализация глобальных переменных
 gun = Gun()
 ground = Ground()
-
 paratroopers_state = ParatroopersState()
+_end_game = False
 
-soundpad = Soundpad()
+
+def restart():
+    """Перезагрузка счетчика и спрайтов"""
+    global gun, ground, paratroopers_state, _end_game
+    for sprite in SpriteGroups.main_group.sprites():
+        sprite.kill()
+    gun = Gun()
+    ground = Ground()
+    paratroopers_state = ParatroopersState()
+    _end_game = False
+
+
+def break_game():
+    """Устанавливает конец игры"""
+    global _end_game
+    _end_game = True
+
+
+def game_is_end():
+    """Возвращает закончилась ли игра"""
+    return _end_game
