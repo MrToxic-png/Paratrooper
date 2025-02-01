@@ -147,6 +147,7 @@ class _AbstractJet(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.y = self.height
+        self.dropping_bomb = random.random() < 0.5
 
     def update(self, *args, **kwargs):
         if args:
@@ -155,6 +156,8 @@ class _AbstractJet(pygame.sprite.Sprite):
                 self.animation()
         if not args:
             self.move()
+            if self.dropping_bomb:
+                self.drop_bomb()
 
     def animation(self):
         """Анимация движения самолета"""
@@ -175,6 +178,7 @@ class _AbstractJet(pygame.sprite.Sprite):
 
     def drop_bomb(self):
         """Сброс бомбы"""
+        return
 
 
 class JetLeft(_AbstractJet):
@@ -188,6 +192,14 @@ class JetLeft(_AbstractJet):
                          SpriteGroups.left_jet_group)
         self.rect.x = -self.rect.w
 
+    def drop_bomb(self):
+        if not gun.is_alive:
+            return
+
+        if self.dropping_bomb and -3 <= self.rect.x <= 3:
+            Bomb('right', self.rect.x, self.rect.y + self.rect.h)
+            self.dropping_bomb = False
+
 
 class JetRight(_AbstractJet):
     image_sequence = tuple(map(lambda number: load_image(f'images/aviation/jet_right_{number}.png'), (1, 2, 3)))
@@ -199,6 +211,14 @@ class JetRight(_AbstractJet):
                          SpriteGroups.jet_group,
                          SpriteGroups.right_jet_group)
         self.rect.x = width
+
+    def drop_bomb(self):
+        if not gun.is_alive:
+            return
+
+        if self.dropping_bomb and width - 3 <= self.rect.x + self.rect.w <= width + 3:
+            Bomb('left', self.rect.x + self.rect.w, self.rect.y + self.rect.h)
+            self.dropping_bomb = False
 
 
 class _AbstractBomb(pygame.sprite.Sprite):
@@ -233,6 +253,11 @@ class _AbstractBomb(pygame.sprite.Sprite):
     def update(self, *args, **kwargs):
         if not args:
             self.move()
+            if pygame.sprite.collide_mask(self, gun) and gun.is_alive:
+                gun.destroy()
+                self.kill()
+            if not self.rect.colliderect(main_screen.get_rect()):
+                self.kill()
 
     def destroy(self):
         """Уничтожение бомбы"""
