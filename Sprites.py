@@ -365,6 +365,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.kill()
         gun.score += 5
         Explode(explode_x, explode_y)
+        paratroopers_state.update()
 
     def open_parachute(self):
         """Раскрытие парашюта"""
