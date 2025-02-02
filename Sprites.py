@@ -703,7 +703,8 @@ class ParatroopersState:
             self.blowing_group[0].is_blowing = True
             self.forth_count = 0
 
-
+            if not self.is_first:
+                self.move_paratroopers()
 
 
     def move_paratroopers(self):
