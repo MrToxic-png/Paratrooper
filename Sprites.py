@@ -308,6 +308,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = paratroopers_state.get_column_x(column)
         self.rect.y = y
+        self.rect.w = 3
         self.is_moving = True
         self.falling_velocity = self.no_parachute_speed
         self.parachute = None
@@ -332,9 +333,11 @@ class Paratrooper(pygame.sprite.Sprite):
                 self.animation()
             elif self.is_moving:
                 self.move()
-
-        if not paratroopers_state.is_first:
-            paratroopers_state.move_paratroopers()
+        else:
+            event = args[0]
+            if event.type == CustomEvents.LOSE_ANIMATION:
+                if not paratroopers_state.is_first:
+                    paratroopers_state.move_paratroopers()
 
     def animation(self):
         """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
@@ -403,7 +406,7 @@ class Parachute(pygame.sprite.Sprite):
                          SpriteGroups.parachute_group)
         self.image = self.parachute_image
         self.rect = self.image.get_rect()
-        self.rect.x = host.rect.x - self.rect.w // 2 + host.rect.w // 2
+        self.rect.x = host.rect.x - self.rect.w // 2 + host.rect.w
         self.rect.y = host.rect.y - 30
         self.speed = Paratrooper.with_parachute_speed
 
@@ -737,6 +740,7 @@ class ParatroopersState:
 
 
     def move_paratroopers(self):
+        step = self._blowing_group[0].rect.w
         if self.side:
             coord = 333 + 12
         else:
@@ -744,9 +748,9 @@ class ParatroopersState:
         if self._blowing_group[0].is_blowing:
             paratrooper = self._blowing_group[0]
             if paratrooper.rect.x != coord and self.side:
-                paratrooper.rect.x += paratrooper.rect.w
+                paratrooper.rect.x += step
             elif paratrooper.rect.x != coord and not self.side:
-                paratrooper.rect.x -= paratrooper.rect.w
+                paratrooper.rect.x -= step
             else:
                 paratrooper.is_blowing = False
                 self._blowing_group[1].is_blowing = True
@@ -754,9 +758,9 @@ class ParatroopersState:
             if self._blowing_group[1].is_blowing:
                 paratrooper = self._blowing_group[1]
                 if paratrooper.rect.x != coord - 12 and self.side:
-                    paratrooper.rect.x += paratrooper.rect.w
+                    paratrooper.rect.x += step
                 elif paratrooper.rect.x != coord + 12 and not self.side:
-                    paratrooper.rect.x -= paratrooper.rect.w
+                    paratrooper.rect.x -= step
                 else:
                     self.one_up(paratrooper)
                     paratrooper.is_blowing = False
@@ -765,9 +769,9 @@ class ParatroopersState:
                 if self._blowing_group[2].is_blowing:
                     paratrooper = self._blowing_group[2]
                     if paratrooper.rect.x != coord - 12 and self.side:
-                        paratrooper.rect.x += paratrooper.rect.w
+                        paratrooper.rect.x += step
                     elif paratrooper.rect.x != coord + 12 and not self.side:
-                        paratrooper.rect.x -= paratrooper.rect.w
+                        paratrooper.rect.x -= step
                     else:
                         paratrooper.is_blowing = False
                         self._blowing_group[3].is_blowing = True
@@ -775,9 +779,9 @@ class ParatroopersState:
                     if self._blowing_group[3].is_blowing:
                         paratrooper = self._blowing_group[3]
                         if paratrooper.rect.x != coord - 12 and self.side:
-                            paratrooper.rect.x += paratrooper.rect.w
+                            paratrooper.rect.x += step
                         elif paratrooper.rect.x != coord + 12 and not self.side:
-                            paratrooper.rect.x -= paratrooper.rect.w
+                            paratrooper.rect.x -= step
                         else:
                             if self.forth_count < 3:
                                 self.one_up(paratrooper)
@@ -787,10 +791,10 @@ class ParatroopersState:
 
     def one_up(self, paratrooper: Paratrooper):
         if self.side:
-            paratrooper.rect.x += paratrooper.rect.w
+            paratrooper.rect.x += 4
         else:
-            paratrooper.rect.x -= paratrooper.rect.w
-        paratrooper.rect.y -= paratrooper.rect.h
+            paratrooper.rect.x -= 4
+        paratrooper.rect.y -= paratrooper.rect.height
 
         blowing_group = []
         paratrooper_columns_copy = list(map(list.copy, self.paratrooper_columns))

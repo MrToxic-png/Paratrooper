@@ -16,6 +16,9 @@ pygame.time.set_timer(CD_NEW_WAVE, 3600)
 ENDGAME_HOLD = pygame.USEREVENT + 4
 pygame.time.set_timer(ENDGAME_HOLD, 0)
 
+LOSE_ANIMATION = pygame.USEREVENT + 5
+pygame.time.set_timer(LOSE_ANIMATION, 600)
+
 
 def switch_on_endgame_hold():
     """Включает отсчет в 5 секунд после уничтожения пушки"""
