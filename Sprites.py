@@ -683,15 +683,14 @@ class ParatroopersState:
         self.update_blowing_group()
 
         if self.is_first and self.player_lost():
-            self.blowing_group = self.get_blowing_group()
             self.is_first = False
-            for paratrooper in self.get_blowing_group():
+            for paratrooper in self._blowing_group:
                 paratrooper.is_blowing = False
-            if self.blowing_group[0]._column < 9:
+            if self._blowing_group[0]._column < 9:
                 self.side = True
             else:
                 self.side = False
-            self.blowing_group[0].is_blowing = True
+            self._blowing_group[0].is_blowing = True
             self.forth_count = 0
 
             if not self.is_first:
