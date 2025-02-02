@@ -678,7 +678,7 @@ class ParatroopersState:
             self._continue_dropping()
 
         for column in self.paratrooper_columns:
-            column.sort(key=lambda paratrooper: paratrooper.rect.y, reverse=True)
+            column.sort(key=lambda para: para.rect.y, reverse=True)
 
     def get_blowing_group(self) -> list[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
         """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
