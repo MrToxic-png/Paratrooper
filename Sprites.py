@@ -313,6 +313,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.parachute = None
         self.parachute_used = False
         self.open_parachute_y = random.randint(325, 375)
+        self.is_blowing = False
 
         paratroopers_state.update()
 
@@ -331,6 +332,9 @@ class Paratrooper(pygame.sprite.Sprite):
                 self.animation()
             elif self.is_moving:
                 self.move()
+
+        if not paratroopers_state.is_first:
+            paratroopers_state.move_paratroopers()
 
     def animation(self):
         """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
@@ -693,8 +697,6 @@ class ParatroopersState:
             self._blowing_group[0].is_blowing = True
             self.forth_count = 0
 
-            if not self.is_first:
-                self.move_paratroopers()
 
 
     def update_blowing_group(self):
@@ -702,45 +704,79 @@ class ParatroopersState:
         if not self.player_lost() or self._blowing_group:
             return
 
+        blowing_group = []
+        paratrooper_columns_copy = list(map(list.copy, self.paratrooper_columns))
+
+        if self.left_on_ground_count >= 4:
+            left_columns = paratrooper_columns_copy[:9]
+            while True:
+                leftest_column = left_columns.pop()
+                while leftest_column:
+                    paratrooper = leftest_column.pop()
+                    blowing_group.append(paratrooper)
+                    if len(blowing_group) == 4:
+                        self._blowing_group = tuple(blowing_group)
+                        return
+
+        if self.right_on_ground_count >= 4:
+            # Список переворачивается для эффективного извлечения через pop
+            right_columns = paratrooper_columns_copy[9:][::-1]
+            while True:
+                leftest_column = right_columns.pop()
+                while leftest_column:
+                    paratrooper = leftest_column.pop()
+                    blowing_group.append(paratrooper)
+                    if len(blowing_group) == 4:
+                        self._blowing_group = tuple(blowing_group)
+                        return
+
+    def get_blowing_group(self) -> tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
+        """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
+        Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
+        return self._blowing_group
+
 
     def move_paratroopers(self):
         if self.side:
-            coord = 333 + 24
+            coord = 333 + 12
         else:
             coord = 465 - 24
-        if self.blowing_group[0].is_blowing:
-            paratrooper = self.blowing_group[0]
-            if not paratrooper.rect.x != coord and self.side:
+        if self._blowing_group[0].is_blowing:
+            paratrooper = self._blowing_group[0]
+            if paratrooper.rect.x != coord and self.side:
                 paratrooper.rect.x += paratrooper.rect.w
-            elif not paratrooper.rect.x != coord and not self.side:
+            elif paratrooper.rect.x != coord and not self.side:
                 paratrooper.rect.x -= paratrooper.rect.w
             else:
                 paratrooper.is_blowing = False
+                self._blowing_group[1].is_blowing = True
         else:
-            if self.blowing_group[1].is_blowing:
-                paratrooper = self.blowing_group[1]
-                if not paratrooper.rect.x != coord - 12 and self.side:
+            if self._blowing_group[1].is_blowing:
+                paratrooper = self._blowing_group[1]
+                if paratrooper.rect.x != coord - 12 and self.side:
                     paratrooper.rect.x += paratrooper.rect.w
-                elif not paratrooper.rect.x != coord + 12 and not self.side:
+                elif paratrooper.rect.x != coord + 12 and not self.side:
                     paratrooper.rect.x -= paratrooper.rect.w
                 else:
                     self.one_up(paratrooper)
                     paratrooper.is_blowing = False
+                    self._blowing_group[2].is_blowing = True
             else:
-                if self.blowing_group[2].is_blowing:
-                    paratrooper = self.blowing_group[2]
-                    if not paratrooper.rect.x != coord - 12 and self.side:
+                if self._blowing_group[2].is_blowing:
+                    paratrooper = self._blowing_group[2]
+                    if paratrooper.rect.x != coord - 12 and self.side:
                         paratrooper.rect.x += paratrooper.rect.w
-                    elif not paratrooper.rect.x != coord + 12 and not self.side:
+                    elif paratrooper.rect.x != coord + 12 and not self.side:
                         paratrooper.rect.x -= paratrooper.rect.w
                     else:
                         paratrooper.is_blowing = False
+                        self._blowing_group[3].is_blowing = True
                 else:
-                    if self.blowing_group[3].is_blowing:
-                        paratrooper = self.blowing_group[3]
-                        if not paratrooper.rect.x != coord - 12 and self.side:
+                    if self._blowing_group[3].is_blowing:
+                        paratrooper = self._blowing_group[3]
+                        if paratrooper.rect.x != coord - 12 and self.side:
                             paratrooper.rect.x += paratrooper.rect.w
-                        elif not paratrooper.rect.x != coord + 12 and not self.side:
+                        elif paratrooper.rect.x != coord + 12 and not self.side:
                             paratrooper.rect.x -= paratrooper.rect.w
                         else:
                             if self.forth_count < 3:
@@ -755,12 +791,6 @@ class ParatroopersState:
         else:
             paratrooper.rect.x -= paratrooper.rect.w
         paratrooper.rect.y -= paratrooper.rect.h
-
-    def get_blowing_group(self) -> list[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
-        """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
-        Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
-        if not self.player_lost():
-            return None
 
         blowing_group = []
         paratrooper_columns_copy = list(map(list.copy, self.paratrooper_columns))
