@@ -778,54 +778,24 @@ class ParatroopersState:
                 else:
                     if self._blowing_group[3].is_blowing:
                         paratrooper = self._blowing_group[3]
-                        if paratrooper.rect.x != coord - 12 and self.side:
+                        if paratrooper.rect.x <= coord - 24 and self.side and self.forth_count == 0:
                             paratrooper.rect.x += step
-                        elif paratrooper.rect.x != coord + 12 and not self.side:
+                        elif paratrooper.rect.x >= coord + 24 and not self.side and self.forth_count == 0:
                             paratrooper.rect.x -= step
                         else:
                             if self.forth_count < 3:
-                                self.one_up(paratrooper)
                                 self.forth_count += 1
-                            paratrooper.is_blowing = False
-                            gun.destroy()
+                                self.one_up(paratrooper)
+                            else:
+                                paratrooper.is_blowing = False
+                                gun.destroy()
 
     def one_up(self, paratrooper: Paratrooper):
         if self.side:
-            paratrooper.rect.x += 4
+            paratrooper.rect.x += 12
         else:
-            paratrooper.rect.x -= 4
-        paratrooper.rect.y -= paratrooper.rect.height
-
-        blowing_group = []
-        paratrooper_columns_copy = list(map(list.copy, self.paratrooper_columns))
-
-        if self.left_on_ground_count >= 4:
-            left_columns = paratrooper_columns_copy[:9]
-            while True:
-                leftest_column = left_columns.pop()
-                while leftest_column:
-                    paratrooper = leftest_column.pop()
-                    blowing_group.append(paratrooper)
-                    if len(blowing_group) == 4:
-                        self._blowing_group = tuple(blowing_group)
-                        return
-
-        if self.right_on_ground_count >= 4:
-            # Список переворачивается для эффективного извлечения через pop
-            right_columns = paratrooper_columns_copy[9:][::-1]
-            while True:
-                leftest_column = right_columns.pop()
-                while leftest_column:
-                    paratrooper = leftest_column.pop()
-                    blowing_group.append(paratrooper)
-                    if len(blowing_group) == 4:
-                        self._blowing_group = tuple(blowing_group)
-                        return
-
-    def get_blowing_group(self) -> tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
-        """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
-        Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
-        return self._blowing_group
+            paratrooper.rect.x -= 12
+        paratrooper.rect.y -= paratrooper.rect.height - 2
 
     def kill_column(self, column: int):
         """Уничтожает всех парашютистов на земле на определенном столбце
