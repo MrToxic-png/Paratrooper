@@ -329,9 +329,7 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.rect.y >= 580:
-                self.animation()
-            elif self.is_moving:
+            if self.is_moving and self.rect.y < 580:
                 self.move()
         else:
             event = args[0]
@@ -341,6 +339,7 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def animation(self):
         """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
+        self.image = next(self.image_cycle)
 
     def move(self):
         """Падение парашютиста"""
@@ -752,10 +751,12 @@ class ParatroopersState:
             paratrooper = self._blowing_group[0]
             if paratrooper.rect.x != coord and self.side:
                 paratrooper.rect.x += step
+                paratrooper.animation()
                 if paratrooper.rect.y != 553:
                     paratrooper.rect.y = 553
             elif paratrooper.rect.x != coord and not self.side:
                 paratrooper.rect.x -= step
+                paratrooper.animation()
                 if paratrooper.rect.y != 553:
                     paratrooper.rect.y = 553
             else:
@@ -766,10 +767,12 @@ class ParatroopersState:
                 paratrooper = self._blowing_group[1]
                 if paratrooper.rect.x != coord - 12 and self.side:
                     paratrooper.rect.x += step
+                    paratrooper.animation()
                     if paratrooper.rect.y != 553:
                         paratrooper.rect.y = 553
                 elif paratrooper.rect.x != coord + 12 and not self.side:
                     paratrooper.rect.x -= step
+                    paratrooper.animation()
                     if paratrooper.rect.y != 553:
                         paratrooper.rect.y = 553
                 else:
@@ -781,10 +784,12 @@ class ParatroopersState:
                     paratrooper = self._blowing_group[2]
                     if paratrooper.rect.x != coord - 12 and self.side:
                         paratrooper.rect.x += step
+                        paratrooper.animation()
                         if paratrooper.rect.y != 553:
                             paratrooper.rect.y = 553
                     elif paratrooper.rect.x != coord + 12 and not self.side:
                         paratrooper.rect.x -= step
+                        paratrooper.animation()
                         if paratrooper.rect.y != 553:
                             paratrooper.rect.y = 553
                     else:
@@ -795,10 +800,12 @@ class ParatroopersState:
                         paratrooper = self._blowing_group[3]
                         if paratrooper.rect.x <= coord - 24 and self.side and self.forth_count == 0:
                             paratrooper.rect.x += step
+                            paratrooper.animation()
                             if paratrooper.rect.y != 553:
                                 paratrooper.rect.y = 553
                         elif paratrooper.rect.x >= coord + 24 and not self.side and self.forth_count == 0:
                             paratrooper.rect.x -= step
+                            paratrooper.animation()
                             if paratrooper.rect.y != 553:
                                 paratrooper.rect.y = 553
                         else:
