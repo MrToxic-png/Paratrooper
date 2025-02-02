@@ -831,6 +831,10 @@ class ParatroopersState:
         """Возвращает булево значение: есть ли летящие парашютисты в столбце или нет"""
         return any(map(lambda paratrooper: paratrooper.in_air, self.paratrooper_columns[column]))
 
+    def reset(self):
+        self._blowing_group: tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None = None
+        self.update()
+
     def _add_paratrooper(self, paratrooper: Paratrooper):
         """Добавляет парашютиста в определенный столбец"""
         self.paratrooper_columns[paratrooper.column].append(paratrooper)
@@ -882,7 +886,7 @@ def restart():
         sprite.kill()
     gun = Gun()
     ground = Ground()
-    paratroopers_state.update()
+    paratroopers_state.reset()
     _end_game = False
 
 
