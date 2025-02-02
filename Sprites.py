@@ -897,8 +897,3 @@ def game_is_end():
     """Возвращает, закончилась ли игра"""
     return _end_game
 
-
-Paratrooper(9, 1)
-Paratrooper(10, 1)
-Paratrooper(11, 1)
-Paratrooper(12, 1)
