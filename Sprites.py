@@ -292,7 +292,7 @@ class Bomb(_AbstractBomb):
 
 class Paratrooper(pygame.sprite.Sprite):
     """Спрайт парашютиста"""
-    divs_image_sequence = tuple(map(lambda number: f'images/divs/div_{number}.png', (1, 2)))
+    divs_image_sequence = tuple(map(lambda number: load_image(f'assets/images/divs/div_{number}.png'), (1, 2)))
 
     no_parachute_speed = 180
     with_parachute_speed = 105
@@ -742,7 +742,7 @@ class ParatroopersState:
 
 
     def move_paratroopers(self):
-        step = self._blowing_group[0].rect.w
+        self.step = self._blowing_group[0].rect.w
         if self.side:
             coord = 333 + 12
         else:
@@ -750,12 +750,12 @@ class ParatroopersState:
         if self._blowing_group[0].is_blowing:
             paratrooper = self._blowing_group[0]
             if paratrooper.rect.x != coord and self.side:
-                paratrooper.rect.x += step
+                paratrooper.rect.x += self.step
                 paratrooper.animation()
                 if paratrooper.rect.y != 553:
                     paratrooper.rect.y = 553
             elif paratrooper.rect.x != coord and not self.side:
-                paratrooper.rect.x -= step
+                paratrooper.rect.x -= self.step
                 paratrooper.animation()
                 if paratrooper.rect.y != 553:
                     paratrooper.rect.y = 553
@@ -766,12 +766,12 @@ class ParatroopersState:
             if self._blowing_group[1].is_blowing:
                 paratrooper = self._blowing_group[1]
                 if paratrooper.rect.x != coord - 12 and self.side:
-                    paratrooper.rect.x += step
+                    paratrooper.rect.x += self.step
                     paratrooper.animation()
                     if paratrooper.rect.y != 553:
                         paratrooper.rect.y = 553
                 elif paratrooper.rect.x != coord + 12 and not self.side:
-                    paratrooper.rect.x -= step
+                    paratrooper.rect.x -= self.step
                     paratrooper.animation()
                     if paratrooper.rect.y != 553:
                         paratrooper.rect.y = 553
@@ -783,12 +783,12 @@ class ParatroopersState:
                 if self._blowing_group[2].is_blowing:
                     paratrooper = self._blowing_group[2]
                     if paratrooper.rect.x != coord - 12 and self.side:
-                        paratrooper.rect.x += step
+                        paratrooper.rect.x += self.step
                         paratrooper.animation()
                         if paratrooper.rect.y != 553:
                             paratrooper.rect.y = 553
                     elif paratrooper.rect.x != coord + 12 and not self.side:
-                        paratrooper.rect.x -= step
+                        paratrooper.rect.x -= self.step
                         paratrooper.animation()
                         if paratrooper.rect.y != 553:
                             paratrooper.rect.y = 553
@@ -799,12 +799,12 @@ class ParatroopersState:
                     if self._blowing_group[3].is_blowing:
                         paratrooper = self._blowing_group[3]
                         if paratrooper.rect.x <= coord - 24 and self.side and self.forth_count == 0:
-                            paratrooper.rect.x += step
+                            paratrooper.rect.x += self.step
                             paratrooper.animation()
                             if paratrooper.rect.y != 553:
                                 paratrooper.rect.y = 553
                         elif paratrooper.rect.x >= coord + 24 and not self.side and self.forth_count == 0:
-                            paratrooper.rect.x -= step
+                            paratrooper.rect.x -= self.step
                             paratrooper.animation()
                             if paratrooper.rect.y != 553:
                                 paratrooper.rect.y = 553
@@ -923,8 +923,3 @@ def break_game():
 def game_is_end():
     """Возвращает, закончилась ли игра"""
     return _end_game
-
-Paratrooper(2, 60)
-Paratrooper(2, 2)
-Paratrooper(3, 3)
-Paratrooper(4, 4)
