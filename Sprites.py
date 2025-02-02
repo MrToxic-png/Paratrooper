@@ -740,99 +740,71 @@ class ParatroopersState:
         Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
         return self._blowing_group
 
-
-    def move_paratroopers(self):
+    def move_on_one_step(self, paratrooper):
+        """Передвигает парашютиста на 1 шаг"""
         self.step = self._blowing_group[0].rect.w
         if self.side:
-            coord = 333 + 12
+            paratrooper.rect.x += self.step
+        elif self.side:
+            paratrooper.rect.x -= self.step
+        paratrooper.animation()
+        if paratrooper.rect.y != 553:
+            paratrooper.rect.y = 553
+
+    def move_till_coords(self, paratrooper, coords):
+        """Передвигает парашютиста до координат"""
+        if paratrooper.rect.x == coords:
+            return True
         else:
-            coord = 465 - 24
+            self.move_on_one_step(paratrooper)
+            return False
+
+
+    def change_coords(self, x):
+        """Меняет координаты на нужное для парашютиста"""
+        if self.side:
+            return 345 - x
+        else:
+            return 441 + x
+
+    def move_paratroopers(self):
+        """Воспроизводит анимацию проигрыша игрока"""
+        paratrooper = self._blowing_group[0]
         if self._blowing_group[0].is_blowing:
-            paratrooper = self._blowing_group[0]
-            if paratrooper.rect.x != coord and self.side:
-                paratrooper.rect.x += self.step
-                paratrooper.animation()
-                if paratrooper.rect.y != 553:
-                    paratrooper.rect.y = 553
-            elif paratrooper.rect.x != coord and not self.side:
-                paratrooper.rect.x -= self.step
-                paratrooper.animation()
-                if paratrooper.rect.y != 553:
-                    paratrooper.rect.y = 553
-            else:
+            self.coord_x = self.change_coords(0)
+            if self.move_till_coords(paratrooper, self.coord_x):
                 paratrooper.is_blowing = False
                 self._blowing_group[1].is_blowing = True
+                self.coord_x = self.change_coords(12)
         else:
+            paratrooper = self._blowing_group[1]
             if self._blowing_group[1].is_blowing:
-                paratrooper = self._blowing_group[1]
-                if paratrooper.rect.x != coord - 12 and self.side:
-                    paratrooper.rect.x += self.step
-                    paratrooper.animation()
-                    if paratrooper.rect.y != 553:
-                        paratrooper.rect.y = 553
-                elif paratrooper.rect.x != coord + 12 and not self.side:
-                    paratrooper.rect.x -= self.step
-                    paratrooper.animation()
-                    if paratrooper.rect.y != 553:
-                        paratrooper.rect.y = 553
-                else:
+                if self.move_till_coords(paratrooper, self.coord_x):
                     self.one_up(paratrooper)
                     paratrooper.is_blowing = False
                     self._blowing_group[2].is_blowing = True
             else:
+                paratrooper = self._blowing_group[2]
                 if self._blowing_group[2].is_blowing:
-                    paratrooper = self._blowing_group[2]
-                    if paratrooper.rect.x != coord - 12 and self.side:
-                        paratrooper.rect.x += self.step
-                        paratrooper.animation()
-                        if paratrooper.rect.y != 553:
-                            paratrooper.rect.y = 553
-                    elif paratrooper.rect.x != coord + 12 and not self.side:
-                        paratrooper.rect.x -= self.step
-                        paratrooper.animation()
-                        if paratrooper.rect.y != 553:
-                            paratrooper.rect.y = 553
-                    else:
+                    if self.move_till_coords(paratrooper, self.coord_x):
+                        self.coord_x = self.change_coords(24)
                         paratrooper.is_blowing = False
                         self._blowing_group[3].is_blowing = True
                 else:
+                    paratrooper = self._blowing_group[3]
                     if self._blowing_group[3].is_blowing:
-                        paratrooper = self._blowing_group[3]
-                        if paratrooper.rect.x <= coord - 24 and self.side and self.forth_count == 0:
-                            paratrooper.rect.x += self.step
-                            paratrooper.animation()
-                            if paratrooper.rect.y != 553:
-                                paratrooper.rect.y = 553
-                        elif paratrooper.rect.x >= coord + 24 and not self.side and self.forth_count == 0:
-                            paratrooper.rect.x -= self.step
-                            paratrooper.animation()
-                            if paratrooper.rect.y != 553:
-                                paratrooper.rect.y = 553
-                        else:
-                            if self.forth_count == 0:
-                                if not self.side:
-                                    paratrooper.rect.x = self._left_side_getting_up_coords[0]
-                                else:
-                                    paratrooper.rect.x = self._right_side_getting_up_coords[0]
-                                paratrooper.rect.y -= 20
-                            elif self.forth_count == 8:
-                                if not self.side:
-                                    paratrooper.rect.x = self._left_side_getting_up_coords[1]
-                                else:
-                                    paratrooper.rect.x = self._right_side_getting_up_coords[1]
-                                paratrooper.rect.y -= 20
-                            elif self.forth_count == 16:
-                                if not self.side:
-                                    paratrooper.rect.x = self._left_side_getting_up_coords[2]
-                                else:
-                                    paratrooper.rect.x = self._right_side_getting_up_coords[2]
-                                paratrooper.rect.y -= 20
-                            elif self.forth_count > 24:
+                        if paratrooper.rect.x >= self.coord_x:
+                            if self.forth_count < 3:
+                                self.one_up(paratrooper)
+                            else:
                                 paratrooper.is_blowing = False
                                 gun.destroy()
                             self.forth_count += 1
+                        else:
+                            self.move_till_coords(paratrooper, self.coord_x)
 
     def one_up(self, paratrooper: Paratrooper):
+        """Передвигает парашютиста на 1 ступень"""
         if self.side:
             paratrooper.rect.x += 12
         else:
