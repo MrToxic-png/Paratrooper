@@ -314,7 +314,6 @@ class Paratrooper(pygame.sprite.Sprite):
         self.parachute = None
         self.parachute_used = False
         self.open_parachute_y = random.randint(325, 375)
-        self.blowing_number = 0
 
         paratroopers_state.update()
 
@@ -336,49 +335,7 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def animation(self):
         """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
-        collided_gun = pygame.sprite.spritecollide(self, SpriteGroups.gun_group, False,
-                                                       pygame.sprite.collide_mask)
-        collided_guy = pygame.sprite.spritecollide(self, SpriteGroups.paratrooper_group, False,
-                                                       pygame.sprite.collide_mask)
-        if self.blowing_number == 1 and not collided_gun:
-            if self.column <= 9:
-                self.rect.x += self.rect.w
-            else:
-                self.rect.x -= self.rect.w
-            self.image = next(self.image_cycle)
-        elif self.blowing_number == 2:
-            if not collided_guy:
-                if self.column <= 9:
-                    self.rect.x += self.rect.w
-                else:
-                    self.rect.x -= self.rect.w
-                self.image = next(self.image_cycle)
-            elif not collided_gun:
-                self.rect.y -= self.rect.h
-                if self.column <= 9:
-                    self.rect.x += self.rect.w
-                else:
-                    self.rect.x -= self.rect.w
-        elif self.blowing_number == 3:
-            if not collided_guy:
-                if self.column <= 9:
-                    self.rect.x += self.rect.w
-                else:
-                    self.rect.x -= self.rect.w
-                self.image = next(self.image_cycle)
-        elif self.blowing_number == 4:
-            if not collided_guy:
-                if self.column <= 9:
-                    self.rect.x += self.rect.w
-                else:
-                    self.rect.x -= self.rect.w
-                self.image = next(self.image_cycle)
-            elif not collided_gun:
-                self.rect.y -= self.rect.h
-                if self.column <= 9:
-                    self.rect.x += self.rect.w
-                else:
-                    self.rect.x -= self.rect.w
+        pass
 
 
 
@@ -686,6 +643,8 @@ class ParatroopersState:
         self.paratrooper_columns = [[] for _ in range(18)]
         self._dropping_allowed = True
         self.is_first = True
+        self.blowing_group = None
+        self.side = None
 
     @property
     def dropping_allowed(self):
@@ -731,10 +690,74 @@ class ParatroopersState:
         for column in self.paratrooper_columns:
             column.sort(key=lambda paratrooper: paratrooper.rect.y, reverse=True)
 
+
         if self.is_first and self.player_lost():
+            self.blowing_group = self.get_blowing_group()
             self.is_first = False
-            for index, paratrooper in enumerate(self.get_blowing_group()):
-                paratrooper.blowing_number = index + 1
+            for paratrooper in self.get_blowing_group():
+                paratrooper.is_blowing = False
+            if self.blowing_group[0]._column < 9:
+                self.side = True
+            else:
+                self.side = False
+            self.blowing_group[0].is_blowing = True
+            self.forth_count = 0
+
+
+
+
+    def move_paratroopers(self):
+        if self.side:
+            coord = 333 + 24
+        else:
+            coord = 465 - 24
+        if self.blowing_group[0].is_blowing:
+            paratrooper = self.blowing_group[0]
+            if not paratrooper.rect.x != coord and self.side:
+                paratrooper.rect.x += paratrooper.rect.w
+            elif not paratrooper.rect.x != coord and not self.side:
+                paratrooper.rect.x -= paratrooper.rect.w
+            else:
+                paratrooper.is_blowing = False
+        else:
+            if self.blowing_group[1].is_blowing:
+                paratrooper = self.blowing_group[1]
+                if not paratrooper.rect.x != coord - 12 and self.side:
+                    paratrooper.rect.x += paratrooper.rect.w
+                elif not paratrooper.rect.x != coord + 12 and not self.side:
+                    paratrooper.rect.x -= paratrooper.rect.w
+                else:
+                    self.one_up(paratrooper)
+                    paratrooper.is_blowing = False
+            else:
+                if self.blowing_group[2].is_blowing:
+                    paratrooper = self.blowing_group[2]
+                    if not paratrooper.rect.x != coord - 12 and self.side:
+                        paratrooper.rect.x += paratrooper.rect.w
+                    elif not paratrooper.rect.x != coord + 12 and not self.side:
+                        paratrooper.rect.x -= paratrooper.rect.w
+                    else:
+                        paratrooper.is_blowing = False
+                else:
+                    if self.blowing_group[3].is_blowing:
+                        paratrooper = self.blowing_group[3]
+                        if not paratrooper.rect.x != coord - 12 and self.side:
+                            paratrooper.rect.x += paratrooper.rect.w
+                        elif not paratrooper.rect.x != coord + 12 and not self.side:
+                            paratrooper.rect.x -= paratrooper.rect.w
+                        else:
+                            if self.forth_count < 3:
+                                self.one_up(paratrooper)
+                                self.forth_count += 1
+                            paratrooper.is_blowing = False
+                            gun.destroy()
+
+    def one_up(self, paratrooper: Paratrooper):
+        if self.side:
+            paratrooper.rect.x += paratrooper.rect.w
+        else:
+            paratrooper.rect.x -= paratrooper.rect.w
+        paratrooper.rect.y -= paratrooper.rect.h
 
     def get_blowing_group(self) -> list[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
         """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
