@@ -702,8 +702,6 @@ class ParatroopersState:
             self._blowing_group[0].is_blowing = True
             self.forth_count = 0
 
-
-
     def update_blowing_group(self):
         """При обновлении проверяется наличие подходящей группы штурмовиков"""
         if not self.player_lost() or self._blowing_group:
@@ -745,7 +743,7 @@ class ParatroopersState:
         self.step = self._blowing_group[0].rect.w
         if self.side:
             paratrooper.rect.x += self.step
-        elif self.side:
+        else:
             paratrooper.rect.x -= self.step
         paratrooper.animation()
         if paratrooper.rect.y != 553:
@@ -758,7 +756,6 @@ class ParatroopersState:
         else:
             self.move_on_one_step(paratrooper)
             return False
-
 
     def change_coords(self, x):
         """Меняет координаты на нужное для парашютиста"""
@@ -793,7 +790,8 @@ class ParatroopersState:
                 else:
                     paratrooper = self._blowing_group[3]
                     if self._blowing_group[3].is_blowing:
-                        if paratrooper.rect.x >= self.coord_x:
+                        if (paratrooper.rect.x >= self.coord_x and self.side) or (
+                                paratrooper.rect.x <= self.coord_x and not self.side):
                             if self.forth_count < 3:
                                 self.one_up(paratrooper)
                             else:
@@ -852,8 +850,8 @@ class ParatroopersState:
         return any(map(lambda column: any(map(lambda paratrooper: paratrooper.in_air, column)),
                        self.paratrooper_columns))
 
-class Soundpad:
 
+class Soundpad:
     intro_sound = pygame.mixer.Sound('assets/audio/intro.ogg')
     outro_sound = pygame.mixer.Sound('assets/audio/outro.ogg')
 
@@ -868,7 +866,6 @@ class Soundpad:
 
     def stop(self, sound):
         pygame.mixer.Sound.stop(self.all_sounds[sound])
-
 
 
 # Инициализация глобальных переменных
@@ -899,3 +896,9 @@ def break_game():
 def game_is_end():
     """Возвращает, закончилась ли игра"""
     return _end_game
+
+
+Paratrooper(9, 1)
+Paratrooper(10, 1)
+Paratrooper(11, 1)
+Paratrooper(12, 1)
