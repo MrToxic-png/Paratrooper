@@ -292,7 +292,6 @@ class Bomb(_AbstractBomb):
 
 class Paratrooper(pygame.sprite.Sprite):
     """Спрайт парашютиста"""
-    paratrooper_image = load_image('assets/images/trooper.png')
     divs_image_sequence = tuple(map(lambda number: f'images/divs/div_{number}.png', (1, 2)))
 
     no_parachute_speed = 180
@@ -302,6 +301,7 @@ class Paratrooper(pygame.sprite.Sprite):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.paratrooper_group)
+        self.paratrooper_image = load_image('assets/images/trooper.png')
         self.image_cycle = itertools.cycle(self.divs_image_sequence)
         self.image = self.paratrooper_image
         self._column = column
@@ -634,6 +634,9 @@ class ParatroopersState:
     columns_cords = _left_side_cords_x + _right_side_cords_x
     column_count = len(columns_cords)
 
+    _right_side_getting_up_coords = [333, 345, 357]
+    _left_side_getting_up_coords = [453, 441, 429]
+
     def __init__(self):
         self.left_on_ground_count = 0
         self.right_on_ground_count = 0
@@ -749,8 +752,12 @@ class ParatroopersState:
             paratrooper = self._blowing_group[0]
             if paratrooper.rect.x != coord and self.side:
                 paratrooper.rect.x += step
+                if paratrooper.rect.y != 553:
+                    paratrooper.rect.y = 553
             elif paratrooper.rect.x != coord and not self.side:
                 paratrooper.rect.x -= step
+                if paratrooper.rect.y != 553:
+                    paratrooper.rect.y = 553
             else:
                 paratrooper.is_blowing = False
                 self._blowing_group[1].is_blowing = True
@@ -759,8 +766,12 @@ class ParatroopersState:
                 paratrooper = self._blowing_group[1]
                 if paratrooper.rect.x != coord - 12 and self.side:
                     paratrooper.rect.x += step
+                    if paratrooper.rect.y != 553:
+                        paratrooper.rect.y = 553
                 elif paratrooper.rect.x != coord + 12 and not self.side:
                     paratrooper.rect.x -= step
+                    if paratrooper.rect.y != 553:
+                        paratrooper.rect.y = 553
                 else:
                     self.one_up(paratrooper)
                     paratrooper.is_blowing = False
@@ -770,8 +781,12 @@ class ParatroopersState:
                     paratrooper = self._blowing_group[2]
                     if paratrooper.rect.x != coord - 12 and self.side:
                         paratrooper.rect.x += step
+                        if paratrooper.rect.y != 553:
+                            paratrooper.rect.y = 553
                     elif paratrooper.rect.x != coord + 12 and not self.side:
                         paratrooper.rect.x -= step
+                        if paratrooper.rect.y != 553:
+                            paratrooper.rect.y = 553
                     else:
                         paratrooper.is_blowing = False
                         self._blowing_group[3].is_blowing = True
@@ -780,15 +795,35 @@ class ParatroopersState:
                         paratrooper = self._blowing_group[3]
                         if paratrooper.rect.x <= coord - 24 and self.side and self.forth_count == 0:
                             paratrooper.rect.x += step
+                            if paratrooper.rect.y != 553:
+                                paratrooper.rect.y = 553
                         elif paratrooper.rect.x >= coord + 24 and not self.side and self.forth_count == 0:
                             paratrooper.rect.x -= step
+                            if paratrooper.rect.y != 553:
+                                paratrooper.rect.y = 553
                         else:
-                            if self.forth_count < 3:
-                                self.forth_count += 1
-                                self.one_up(paratrooper)
-                            else:
+                            if self.forth_count == 0:
+                                if not self.side:
+                                    paratrooper.rect.x = self._left_side_getting_up_coords[0]
+                                else:
+                                    paratrooper.rect.x = self._right_side_getting_up_coords[0]
+                                paratrooper.rect.y -= 20
+                            elif self.forth_count == 8:
+                                if not self.side:
+                                    paratrooper.rect.x = self._left_side_getting_up_coords[1]
+                                else:
+                                    paratrooper.rect.x = self._right_side_getting_up_coords[1]
+                                paratrooper.rect.y -= 20
+                            elif self.forth_count == 16:
+                                if not self.side:
+                                    paratrooper.rect.x = self._left_side_getting_up_coords[2]
+                                else:
+                                    paratrooper.rect.x = self._right_side_getting_up_coords[2]
+                                paratrooper.rect.y -= 20
+                            elif self.forth_count > 24:
                                 paratrooper.is_blowing = False
                                 gun.destroy()
+                            self.forth_count += 1
 
     def one_up(self, paratrooper: Paratrooper):
         if self.side:
@@ -881,3 +916,8 @@ def break_game():
 def game_is_end():
     """Возвращает, закончилась ли игра"""
     return _end_game
+
+Paratrooper(2, 60)
+Paratrooper(2, 2)
+Paratrooper(3, 3)
+Paratrooper(4, 4)

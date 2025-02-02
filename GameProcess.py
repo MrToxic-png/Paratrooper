@@ -91,6 +91,7 @@ class Game:
     def restart(self):
         """Начало новой игры"""
         Sprites.restart()
+        Sprites.paratroopers_state.is_first = True
         self.enemy_wave = EnemyWave()
         self.game_stopped = False
 
