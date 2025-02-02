@@ -304,7 +304,6 @@ class Paratrooper(pygame.sprite.Sprite):
                          SpriteGroups.paratrooper_group)
         self.image_cycle = itertools.cycle(self.divs_image_sequence)
         self.image = self.paratrooper_image
-        self.mask = pygame.mask.from_surface(self.image)
         self._column = column
         self.rect = self.image.get_rect()
         self.rect.x = paratroopers_state.get_column_x(column)
@@ -328,16 +327,13 @@ class Paratrooper(pygame.sprite.Sprite):
 
     def update(self, *args, **kwargs):
         if not args:
-            if self.is_moving:
-                self.move()
-            elif paratroopers_state.player_lost():
+            if self.rect.y >= 580:
                 self.animation()
+            elif self.is_moving:
+                self.move()
 
     def animation(self):
         """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
-        pass
-
-
 
     def move(self):
         """Падение парашютиста"""
@@ -369,11 +365,7 @@ class Paratrooper(pygame.sprite.Sprite):
         self.kill()
         gun.score += 5
         Explode(explode_x, explode_y)
-
-    def die(self):
-        dead_x, dead_y = self.rect.x, self.rect.y
-        self.kill()
-        FallDeath(dead_x, dead_y)
+        paratroopers_state.update()
 
     def open_parachute(self):
         """Раскрытие парашюта"""
@@ -477,8 +469,6 @@ class Gun(pygame.sprite.Sprite):
                 if event.key == pygame.K_UP:
                     self.is_moving = 0
                     Bullet(*self.end_gun_point, self.angle)
-                if event.key == pygame.K_w:
-                    self.destroy()
 
         if not args:
             self.angle += (self.angle_velocity / fps) * self.is_moving
@@ -640,10 +630,10 @@ class ParatroopersState:
     def __init__(self):
         self.left_on_ground_count = 0
         self.right_on_ground_count = 0
-        self.paratrooper_columns = [[] for _ in range(18)]
+        self.paratrooper_columns: list[list[Paratrooper]] = [[] for _ in range(18)]
         self._dropping_allowed = True
+        self._blowing_group: tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None = None
         self.is_first = True
-        self.blowing_group = None
         self.side = None
 
     @property
@@ -688,8 +678,14 @@ class ParatroopersState:
             self._continue_dropping()
 
         for column in self.paratrooper_columns:
-            column.sort(key=lambda paratrooper: paratrooper.rect.y, reverse=True)
+            column.sort(key=lambda para: para.rect.y, reverse=True)
 
+        self.update_blowing_group()
+
+    def update_blowing_group(self):
+        """При обновлении проверяется наличие подходящей группы штурмовиков"""
+        if not self.player_lost() or self._blowing_group:
+            return
 
         if self.is_first and self.player_lost():
             self.blowing_group = self.get_blowing_group()
@@ -777,7 +773,8 @@ class ParatroopersState:
                     paratrooper = leftest_column.pop()
                     blowing_group.append(paratrooper)
                     if len(blowing_group) == 4:
-                        return blowing_group
+                        self._blowing_group = tuple(blowing_group)
+                        return
 
         if self.right_on_ground_count >= 4:
             # Список переворачивается для эффективного извлечения через pop
@@ -788,7 +785,13 @@ class ParatroopersState:
                     paratrooper = leftest_column.pop()
                     blowing_group.append(paratrooper)
                     if len(blowing_group) == 4:
-                        return blowing_group
+                        self._blowing_group = tuple(blowing_group)
+                        return
+
+    def get_blowing_group(self) -> tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
+        """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
+        Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
+        return self._blowing_group
 
     def kill_column(self, column: int):
         """Уничтожает всех парашютистов на земле на определенном столбце
@@ -798,6 +801,7 @@ class ParatroopersState:
             gun.score += 5
         death_y_cord = 555
         FallDeath(self.get_column_x(column), death_y_cord)
+        self.update()
 
     def player_lost(self):
         """Возвращает булево значение, проигрывает ли игрок:
@@ -860,7 +864,7 @@ def restart():
         sprite.kill()
     gun = Gun()
     ground = Ground()
-    paratroopers_state = ParatroopersState()
+    paratroopers_state.update()
     _end_game = False
 
 
@@ -871,6 +875,5 @@ def break_game():
 
 
 def game_is_end():
-    """Возвращает закончилась ли игра"""
+    """Возвращает, закончилась ли игра"""
     return _end_game
-
