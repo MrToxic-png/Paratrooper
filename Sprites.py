@@ -633,8 +633,9 @@ class ParatroopersState:
     def __init__(self):
         self.left_on_ground_count = 0
         self.right_on_ground_count = 0
-        self.paratrooper_columns = [[] for _ in range(18)]
+        self.paratrooper_columns: list[list[Paratrooper]] = [[] for _ in range(18)]
         self._dropping_allowed = True
+        self._blowing_group: tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None = None
 
     @property
     def dropping_allowed(self):
@@ -680,11 +681,12 @@ class ParatroopersState:
         for column in self.paratrooper_columns:
             column.sort(key=lambda para: para.rect.y, reverse=True)
 
-    def get_blowing_group(self) -> list[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
-        """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
-        Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
-        if not self.player_lost():
-            return None
+        self.update_blowing_group()
+
+    def update_blowing_group(self):
+        """При обновлении проверяется наличие подходящей группы штурмовиков"""
+        if not self.player_lost() or self._blowing_group:
+            return
 
         blowing_group = []
         paratrooper_columns_copy = list(map(list.copy, self.paratrooper_columns))
@@ -697,7 +699,8 @@ class ParatroopersState:
                     paratrooper = leftest_column.pop()
                     blowing_group.append(paratrooper)
                     if len(blowing_group) == 4:
-                        return blowing_group
+                        self._blowing_group = tuple(blowing_group)
+                        return
 
         if self.right_on_ground_count >= 4:
             # Список переворачивается для эффективного извлечения через pop
@@ -708,7 +711,13 @@ class ParatroopersState:
                     paratrooper = leftest_column.pop()
                     blowing_group.append(paratrooper)
                     if len(blowing_group) == 4:
-                        return blowing_group
+                        self._blowing_group = tuple(blowing_group)
+                        return
+
+    def get_blowing_group(self) -> tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None:
+        """Возвращает список из четырех парашютистов, которые будут штурмовать пушку, если это возможно
+        Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
+        return self._blowing_group
 
     def kill_column(self, column: int):
         """Уничтожает всех парашютистов на земле на определенном столбце
@@ -762,7 +771,7 @@ def restart():
         sprite.kill()
     gun = Gun()
     ground = Ground()
-    paratroopers_state = ParatroopersState()
+    paratroopers_state.update()
     _end_game = False
 
 
