@@ -406,7 +406,7 @@ class Parachute(pygame.sprite.Sprite):
                          SpriteGroups.parachute_group)
         self.image = self.parachute_image
         self.rect = self.image.get_rect()
-        self.rect.x = host.rect.x - self.rect.w // 2 + host.rect.w
+        self.rect.x = host.rect.x - self.rect.w // 2 + host.rect.w + 3
         self.rect.y = host.rect.y - 30
         self.speed = Paratrooper.with_parachute_speed
 
