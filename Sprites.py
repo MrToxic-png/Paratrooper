@@ -682,11 +682,6 @@ class ParatroopersState:
 
         self.update_blowing_group()
 
-    def update_blowing_group(self):
-        """При обновлении проверяется наличие подходящей группы штурмовиков"""
-        if not self.player_lost() or self._blowing_group:
-            return
-
         if self.is_first and self.player_lost():
             self.blowing_group = self.get_blowing_group()
             self.is_first = False
@@ -701,6 +696,12 @@ class ParatroopersState:
 
             if not self.is_first:
                 self.move_paratroopers()
+
+
+    def update_blowing_group(self):
+        """При обновлении проверяется наличие подходящей группы штурмовиков"""
+        if not self.player_lost() or self._blowing_group:
+            return
 
 
     def move_paratroopers(self):
