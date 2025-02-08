@@ -1,18 +1,22 @@
+"""Модуль, в котором реализуется класс главного окна приложения"""
+
 import sys
 
 import pygame
 
 from GameProcess import Game
 from init_pygame import fps, main_screen
-from Soudpad import soundpad
+from Soundpad import soundpad
 
 
 class MainWindow:
+    """Класс главного окна"""
     def __init__(self):
         self.game = Game()
 
     def show_intro(self):
-        image = pygame.image.load('assets/images/aviation/intro.png')
+        """Метод, показывающий стартовое окно"""
+        image = pygame.image.load("assets/images/aviation/intro.png")
         main_screen.blit(image, (0, 0))
         pygame.display.flip()
 
@@ -26,13 +30,9 @@ class MainWindow:
                 if event.key == pygame.K_SPACE:
                     soundpad.stop(0)
                     break
-                if event.key == pygame.K_i:
-                    self.show_instructions()
-
-    def show_instructions(self):
-        pass
 
     def run(self):
+        """Запуск игры"""
         self.show_intro()
         clock = pygame.time.Clock()
         while True:
@@ -44,6 +44,8 @@ class MainWindow:
             pygame.display.flip()
             clock.tick(fps)
 
-    def terminate(self):
+    @staticmethod
+    def terminate():
+        """Прерывание выполнения"""
         pygame.quit()
         sys.exit()

@@ -1,3 +1,5 @@
+"""Модуль с классами спрайтов"""
+
 import itertools
 import os
 import random
@@ -7,8 +9,8 @@ import numpy
 import pygame
 
 import CustomEvents
+from Soundpad import soundpad
 from init_pygame import width, fps, main_screen
-from Soudpad import soundpad
 
 
 def load_image(filename: str | os.PathLike, colorkey=None) -> pygame.Surface:
@@ -69,6 +71,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
         self.dropping_columns = set(random.sample(range(paratroopers_state.column_count), dropping_count))
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if args:
             event = args[0]
             if event.type == CustomEvents.UPDATE_ANIMATION:
@@ -110,7 +113,7 @@ class _AbstractHelicopter(pygame.sprite.Sprite):
 
 class HelicopterLeft(_AbstractHelicopter):
     image_sequence = tuple(
-        map(lambda number: load_image(f'assets/images/aviation/helicopter_left_{number}.png'), (1, 2, 3)))
+        map(lambda number: load_image(f"assets/images/aviation/helicopter_left_{number}.png"), (1, 2, 3)))
 
     height = 50
     helicopter_velocity = _flying_velocity
@@ -125,7 +128,7 @@ class HelicopterLeft(_AbstractHelicopter):
 
 class HelicopterRight(_AbstractHelicopter):
     image_sequence = tuple(
-        map(lambda number: load_image(f'assets/images/aviation/helicopter_right_{number}.png'), (1, 2, 3)))
+        map(lambda number: load_image(f"assets/images/aviation/helicopter_right_{number}.png"), (1, 2, 3)))
 
     height = 10
     helicopter_velocity = -_flying_velocity
@@ -154,6 +157,7 @@ class _AbstractJet(pygame.sprite.Sprite):
         self.dropping_bomb = random.random() < 0.5
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if args:
             event = args[0]
             if event.type == CustomEvents.UPDATE_ANIMATION:
@@ -187,7 +191,7 @@ class _AbstractJet(pygame.sprite.Sprite):
 
 
 class JetLeft(_AbstractJet):
-    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/jet_left_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(map(lambda number: load_image(f"assets/images/aviation/jet_left_{number}.png"), (1, 2, 3)))
     jet_velocity = _flying_velocity
 
     height = 50
@@ -204,12 +208,12 @@ class JetLeft(_AbstractJet):
             return
 
         if self.dropping_bomb and -3 <= self.rect.x <= 3:
-            Bomb('right', self.rect.x, self.rect.y + self.rect.h)
+            Bomb("right", self.rect.x, self.rect.y + self.rect.h)
             self.dropping_bomb = False
 
 
 class JetRight(_AbstractJet):
-    image_sequence = tuple(map(lambda number: load_image(f'assets/images/aviation/jet_right_{number}.png'), (1, 2, 3)))
+    image_sequence = tuple(map(lambda number: load_image(f"assets/images/aviation/jet_right_{number}.png"), (1, 2, 3)))
     jet_velocity = -_flying_velocity
 
     def __init__(self):
@@ -224,13 +228,14 @@ class JetRight(_AbstractJet):
             return
 
         if self.dropping_bomb and width - 3 <= self.rect.x + self.rect.w <= width + 3:
-            Bomb('left', self.rect.x + self.rect.w, self.rect.y + self.rect.h)
+            Bomb("left", self.rect.x + self.rect.w, self.rect.y + self.rect.h)
             self.dropping_bomb = False
 
 
 class _AbstractBomb(pygame.sprite.Sprite):
     """Спрайт бомбы, сбрасываемой самолетом"""
-    bomb_image = load_image('assets/images/bomb.png')
+    bomb_image = load_image("assets/images/bomb.png")
+    bomb_sound = pygame.mixer.Sound("assets/audio/bomb.ogg")
 
     def __init__(self):
         super().__init__(SpriteGroups.main_group,
@@ -242,6 +247,7 @@ class _AbstractBomb(pygame.sprite.Sprite):
         self.current_y: float | None = None
         self.horizontal_velocity: int | None = None
         self.vertical_velocity = 0
+        self.bomb_sound.play()
 
     def move(self):
         """Перемещение бомбы"""
@@ -258,6 +264,7 @@ class _AbstractBomb(pygame.sprite.Sprite):
         self.rect.y = self.current_y
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if not args:
             self.move()
             if pygame.sprite.collide_mask(self, gun) or not self.rect.colliderect(main_screen.get_rect()):
@@ -271,29 +278,25 @@ class _AbstractBomb(pygame.sprite.Sprite):
         self.kill()
         gun.score += 30
         BombExplode(explode_x, explode_y)
+        self.bomb_sound.stop()
 
 
 class Bomb(_AbstractBomb):
-    """Спрайт бомбы, сбрасываемой самолетом"""
-
-    bomb_sound = pygame.mixer.Sound('assets/audio/bomb.ogg')
-
     def __init__(self, way: str, x: int, y: int):
         super().__init__()
 
-        velocity_dict = {'left': -_flying_velocity, 'right': _flying_velocity}
+        velocity_dict = {"left": -_flying_velocity, "right": _flying_velocity}
         if way not in velocity_dict:
-            raise ValueError('way argument must be "left" or "right"')
+            raise ValueError("way argument must be \"left\" or \"right\"")
 
         self.horizontal_velocity = velocity_dict[way]
         self.current_x = x
         self.current_y = y
-        self.bomb_sound.play()
 
 
 class Paratrooper(pygame.sprite.Sprite):
     """Спрайт парашютиста"""
-    divs_image_sequence = tuple(map(lambda number: load_image(f'assets/images/divs/div_{number}.png'), (1, 2)))
+    divs_image_sequence = tuple(map(lambda number: load_image(f"assets/images/divs/div_{number}.png"), (1, 2)))
 
     no_parachute_speed = 180
     with_parachute_speed = 105
@@ -302,7 +305,7 @@ class Paratrooper(pygame.sprite.Sprite):
         super().__init__(SpriteGroups.main_group,
                          SpriteGroups.enemies_group,
                          SpriteGroups.paratrooper_group)
-        self.paratrooper_image = load_image('assets/images/trooper.png')
+        self.paratrooper_image = load_image("assets/images/trooper.png")
         self.image_cycle = itertools.cycle(self.divs_image_sequence)
         self.image = self.paratrooper_image
         self._column = column
@@ -326,9 +329,11 @@ class Paratrooper(pygame.sprite.Sprite):
 
     @property
     def column(self):
+        """Номер столбца, в котором находится парашютист"""
         return self._column
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if not args:
             if self.is_moving and self.rect.y < 580:
                 self.move()
@@ -339,7 +344,7 @@ class Paratrooper(pygame.sprite.Sprite):
                     paratroopers_state.move_paratroopers()
 
     def animation(self):
-        """Анимация парашютиста (пригодится на сцене взбирания парашютистов)"""
+        """Анимация парашютиста при движении к пушке"""
         self.image = next(self.image_cycle)
 
     def move(self):
@@ -363,7 +368,6 @@ class Paratrooper(pygame.sprite.Sprite):
                 self.set_parachute_speed()
             if self.parachute:
                 self.parachute.move()
-            # ^ Заметка: Высота раскрытия парашюта не фиксированное число, дальше решим, как сделаем
 
     def destroy(self):
         """Уничтожение парашютиста"""
@@ -379,7 +383,6 @@ class Paratrooper(pygame.sprite.Sprite):
         if self.parachute_used:
             return
 
-        assert self.parachute is None
         self.parachute = Parachute(self)
         self.parachute_used = True
 
@@ -390,15 +393,17 @@ class Paratrooper(pygame.sprite.Sprite):
             self.parachute = None
 
     def set_no_parachute_speed(self):
+        """Устанавливает скорость свободного падения"""
         self.falling_velocity = self.no_parachute_speed
 
     def set_parachute_speed(self):
+        """Устанавливает скорость падения с парашютом"""
         self.falling_velocity = self.with_parachute_speed
 
 
 class Parachute(pygame.sprite.Sprite):
     """Спрайт парашюта"""
-    parachute_image = load_image('assets/images/para.png')
+    parachute_image = load_image("assets/images/para.png")
 
     def __init__(self, host: Paratrooper):
         super().__init__(SpriteGroups.main_group,
@@ -411,10 +416,6 @@ class Parachute(pygame.sprite.Sprite):
         self.speed = Paratrooper.with_parachute_speed
 
         self.host = host
-
-    def update(self, *args, **kwargs):
-        if not args:
-            pass
 
     def move(self):
         """Передвижение парашюта"""
@@ -429,8 +430,8 @@ class Parachute(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
     """Спрайт турели"""
-    static_gun_part = load_image('assets/images/gun/static_gun_part.png')
-    base_rect_image = load_image('assets/images/gun/base_rect.png')
+    static_gun_part = load_image("assets/images/gun/static_gun_part.png")
+    base_rect_image = load_image("assets/images/gun/base_rect.png")
     left_angle = 190
     right_angle = 350
     center_x, center_y = 39, 33
@@ -455,6 +456,7 @@ class Gun(pygame.sprite.Sprite):
         self.score = 0
 
     def draw(self):
+        """Отрисовка турели"""
         blue_color = (85, 255, 255)
         self.image.fill((0, 0, 0))
         if self.is_alive:
@@ -463,6 +465,7 @@ class Gun(pygame.sprite.Sprite):
         self.image.blit(self.base_rect_image, (0, 0))
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if not self.is_alive:
             return
 
@@ -507,7 +510,7 @@ class Gun(pygame.sprite.Sprite):
 
 class Bullet(pygame.sprite.Sprite):
     """Спрайт пули, которой турель стреляет"""
-    parachute_image = load_image('assets/images/bullet.png')
+    parachute_image = load_image("assets/images/bullet.png")
     bullet_velocity = 300
 
     def __init__(self, bullet_spawn_x: int, bullet_spawn_y: int, angle: int):
@@ -523,6 +526,7 @@ class Bullet(pygame.sprite.Sprite):
         soundpad.play(3)
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if not args:
             if not self.rect.colliderect(main_screen.get_rect()):
                 self.kill()
@@ -538,6 +542,7 @@ class Bullet(pygame.sprite.Sprite):
                 self.kill()
 
     def move(self):
+        """Перемещение пули"""
         displacement_x = self.bullet_velocity * cos(radians(self.angle)) / fps
         displacement_y = self.bullet_velocity * sin(radians(self.angle)) / fps
         self.rect.x += displacement_x
@@ -560,7 +565,7 @@ class Ground(pygame.sprite.Sprite):
 class Explode(pygame.sprite.Sprite):
     """Спрайт с анимацией взрыва"""
     explode_images = tuple(map(lambda number: load_image(
-        f'assets/images/aviation_explosion/enemy_explosion_{number}.png'),
+        f"assets/images/aviation_explosion/enemy_explosion_{number}.png"),
                                range(1, 11)))
 
     def __init__(self, x: int, y: int):
@@ -571,6 +576,7 @@ class Explode(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = x, y
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if args:
             event = args[0]
             if event.type == CustomEvents.UPDATE_ANIMATION:
@@ -582,7 +588,7 @@ class Explode(pygame.sprite.Sprite):
 
 class BombExplode(pygame.sprite.Sprite):
     """Спрайт с анимацией взрыва бомбы"""
-    explode_images = tuple(map(lambda number: load_image(f'assets/images/bomb_explosion/explode_{number}.png'),
+    explode_images = tuple(map(lambda number: load_image(f"assets/images/bomb_explosion/explode_{number}.png"),
                                range(1, 10)))
 
     def __init__(self, x: int, y: int):
@@ -593,6 +599,7 @@ class BombExplode(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = x, y
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if args:
             event = args[0]
             if event.type == CustomEvents.UPDATE_ANIMATION:
@@ -605,7 +612,7 @@ class BombExplode(pygame.sprite.Sprite):
 class FallDeath(pygame.sprite.Sprite):
     """Спрайт с анимацией смерти от падения
     реализация должна быть примерно похожа на Explode"""
-    death_images = tuple(map(lambda number: load_image(f'assets/images/die_animation/skull_{number}.png'),
+    death_images = tuple(map(lambda number: load_image(f"assets/images/die_animation/skull_{number}.png"),
                              range(1, 4)))
 
     def __init__(self, x: int, y: int):
@@ -616,6 +623,7 @@ class FallDeath(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = x - 13, y - 30
 
     def update(self, *args, **kwargs):
+        """Обработка событий"""
         if args:
             event = args[0]
             if event.type == CustomEvents.UPDATE_ANIMATION:
@@ -634,8 +642,8 @@ class ParatroopersState:
     columns_cords = _left_side_cords_x + _right_side_cords_x
     column_count = len(columns_cords)
 
-    _right_side_getting_up_coords = [333, 345, 357]
-    _left_side_getting_up_coords = [453, 441, 429]
+    _right_side_getting_up_cords = [333, 345, 357]
+    _left_side_getting_up_cords = [453, 441, 429]
 
     def __init__(self):
         self.left_on_ground_count = 0
@@ -696,7 +704,7 @@ class ParatroopersState:
             self.is_first = False
             for paratrooper in self._blowing_group:
                 paratrooper.is_blowing = False
-            if self._blowing_group[0]._column < 9:
+            if self._blowing_group[0].column < 9:
                 self.side = True
             else:
                 self.side = False
@@ -739,7 +747,7 @@ class ParatroopersState:
         Порядок парашютистов в списке соответствует порядку подхода парашютистов к пушке"""
         return self._blowing_group
 
-    def move_on_one_step(self, paratrooper):
+    def move_on_one_step(self, paratrooper: Paratrooper):
         """Передвигает парашютиста на 1 шаг"""
         self.step = self._blowing_group[0].rect.w
         if self.side:
@@ -750,15 +758,15 @@ class ParatroopersState:
         if paratrooper.rect.y != 553:
             paratrooper.rect.y = 553
 
-    def move_till_coords(self, paratrooper, coords):
+    def move_till_cords(self, paratrooper: Paratrooper, cords: int):
         """Передвигает парашютиста до координат"""
-        if paratrooper.rect.x == coords:
+        if paratrooper.rect.x == cords:
             return True
         else:
             self.move_on_one_step(paratrooper)
             return False
 
-    def change_coords(self, x):
+    def change_cords(self, x: int):
         """Меняет координаты на нужное для парашютиста"""
         if self.side:
             return 345 - x
@@ -769,30 +777,30 @@ class ParatroopersState:
         """Воспроизводит анимацию проигрыша игрока"""
         paratrooper = self._blowing_group[0]
         if self._blowing_group[0].is_blowing:
-            self.coord_x = self.change_coords(0)
-            if self.move_till_coords(paratrooper, self.coord_x):
+            self.cord_x = self.change_cords(0)
+            if self.move_till_cords(paratrooper, self.cord_x):
                 paratrooper.is_blowing = False
                 self._blowing_group[1].is_blowing = True
-                self.coord_x = self.change_coords(12)
+                self.cord_x = self.change_cords(12)
         else:
             paratrooper = self._blowing_group[1]
             if self._blowing_group[1].is_blowing:
-                if self.move_till_coords(paratrooper, self.coord_x):
+                if self.move_till_cords(paratrooper, self.cord_x):
                     self.one_up(paratrooper)
                     paratrooper.is_blowing = False
                     self._blowing_group[2].is_blowing = True
             else:
                 paratrooper = self._blowing_group[2]
                 if self._blowing_group[2].is_blowing:
-                    if self.move_till_coords(paratrooper, self.coord_x):
-                        self.coord_x = self.change_coords(24)
+                    if self.move_till_cords(paratrooper, self.cord_x):
+                        self.cord_x = self.change_cords(24)
                         paratrooper.is_blowing = False
                         self._blowing_group[3].is_blowing = True
                 else:
                     paratrooper = self._blowing_group[3]
                     if self._blowing_group[3].is_blowing:
-                        if (paratrooper.rect.x >= self.coord_x and self.side) or (
-                                paratrooper.rect.x <= self.coord_x and not self.side):
+                        if (paratrooper.rect.x >= self.cord_x and self.side) or (
+                                paratrooper.rect.x <= self.cord_x and not self.side):
                             if self.forth_count < 3:
                                 self.one_up(paratrooper)
                             else:
@@ -800,7 +808,7 @@ class ParatroopersState:
                                 gun.destroy()
                             self.forth_count += 1
                         else:
-                            self.move_till_coords(paratrooper, self.coord_x)
+                            self.move_till_cords(paratrooper, self.cord_x)
 
     def one_up(self, paratrooper: Paratrooper):
         """Передвигает парашютиста на 1 ступень"""
@@ -831,6 +839,7 @@ class ParatroopersState:
         return any(map(lambda paratrooper: paratrooper.in_air, self.paratrooper_columns[column]))
 
     def reset(self):
+        """Сброс информации о парашютистах"""
         self._blowing_group: tuple[Paratrooper, Paratrooper, Paratrooper, Paratrooper] | None = None
         self.update()
 
@@ -850,6 +859,7 @@ class ParatroopersState:
         """Возвращает булево значение: находится ли хотя бы один из парашютистов в воздухе"""
         return any(map(lambda column: any(map(lambda paratrooper: paratrooper.in_air, column)),
                        self.paratrooper_columns))
+
 
 # Инициализация глобальных переменных
 gun = Gun()
@@ -878,4 +888,3 @@ def break_game():
 def game_is_end():
     """Возвращает, закончилась ли игра"""
     return _end_game
-

@@ -20,7 +20,7 @@ class Game:
 
     def load_high_score(self):
         """Загрузка лучшего результата"""
-        with open('assets/high_score.txt', encoding='utf-8') as file:
+        with open("assets/high_score.txt", encoding="utf-8") as file:
             self.high_score = int(file.read())
 
     def update_high_score(self):
@@ -31,7 +31,7 @@ class Game:
         """Отрисовка счета"""
         self.update_high_score()
 
-        score_font = pygame.font.Font("assets/super-legend-boy.otf", 23)
+        score_font = pygame.font.Font("assets/pixel_font.otf", 23)
         if Sprites.gun.score != 0:
             score_text = score_font.render(str(Sprites.gun.score), True, (255, 84, 255))
             main_screen.blit(score_text, (200, 577))
@@ -45,16 +45,17 @@ class Game:
     @staticmethod
     def draw_endgame_text():
         """Отрисовка сообщения на перезапуск"""
-        font = pygame.font.Font("assets/super-legend-boy.otf", 23)
-        text = font.render('Press SPACE to restart', True, (255, 255, 255))
+        font = pygame.font.Font("assets/pixel_font.otf", 23)
+        text = font.render("Press SPACE to restart", True, (255, 255, 255))
         main_screen.blit(text, (200, 200))
 
     def write_high_score(self):
         """Запись лучшего результата в файл"""
-        with open('assets/high_score.txt', 'w', encoding='utf-8') as file:
+        with open("assets/high_score.txt", "w", encoding="utf-8") as file:
             file.write(str(self.high_score))
 
     def draw(self):
+        """Отрисовка всех элементов игры"""
         main_screen.fill((0, 0, 0))
         Sprites.SpriteGroups.main_group.draw(main_screen)
         self.draw_score()
@@ -100,5 +101,5 @@ class Game:
         self.waiting_for_restart = True
 
     def disable_waiting_for_restart(self):
-        """Отключается ожидание перезапуска игры"""
+        """Отключает ожидание перезапуска игры"""
         self.waiting_for_restart = False

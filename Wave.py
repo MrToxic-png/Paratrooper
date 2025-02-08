@@ -1,9 +1,4 @@
-"""Поток противников можно разделить на волны
-Каждую волну можно точно описать:
--Длительность волны
--Информация о всех вертолетах, каждый из которых в свою очередь будет хранить в себе информацию о том,
-когда и где он сбросит парашютистов
--Информация о всех самолетах (самолеты тоже можно будет разделить на мини-волны) и о том, сбросят они бомбу или нет"""
+"""Модуль, содержащий класс EnemyWave, реализующий волны противников"""
 from random import randint
 
 import CustomEvents
@@ -11,6 +6,7 @@ from Sprites import HelicopterLeft, HelicopterRight, JetLeft, JetRight, paratroo
 
 
 class EnemyWave:
+    """Класс, реализующий поток противников"""
     max_helicopters = randint(8, 10)
     max_jet = randint(3, 5)
 
@@ -23,6 +19,7 @@ class EnemyWave:
         self.wave_stopped = False
 
     def update(self, *args):
+        """Обработка событий"""
         SpriteGroups.main_group.update(*args)
         if self.wave_stopped:
             return
@@ -53,13 +50,17 @@ class EnemyWave:
                     self.count = 0
                     self.is_new_stage = False
 
-    def spawn_helicopter(self):
+    @staticmethod
+    def spawn_helicopter():
+        """Создает вертолет"""
         if randint(0, 1) == 0:
             HelicopterLeft()
         else:
             HelicopterRight()
 
-    def spawn_jet(self):
+    @staticmethod
+    def spawn_jet():
+        """Создает самолет"""
         if paratroopers_state.player_lost():
             return
 
@@ -69,4 +70,5 @@ class EnemyWave:
             JetRight()
 
     def stop_wave(self):
+        """Остановка волны"""
         self.wave_stopped = True

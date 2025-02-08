@@ -1,3 +1,5 @@
+"""Модуль с пользовательскими событиями"""
+
 import pygame
 
 import init_pygame
